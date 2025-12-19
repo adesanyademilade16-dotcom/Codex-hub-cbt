@@ -164,10 +164,7 @@
             <label for="email">Email Address</label>
             <input type="email" id="email" required placeholder="your@email.com">
         </div>
-        <div class="form-group">
-            <label for="course">Course</label>
-            <input type="text" id="course" required>
-        </div>
+
         <div class="form-group">
             <label for="department">Department</label>
             <input type="text" id="department" required>
@@ -230,7 +227,6 @@
         const userData = {
             fullName: form.fullName.value.trim(),
             email: email,
-            course: form.course.value.trim(),
             department: form.department.value.trim(),
             password: form.password.value,
             confirmPassword: form.confirmPassword.value
@@ -257,7 +253,6 @@
             id: Date.now(),
             fullName: userData.fullName,
             email: email,
-            course: userData.course,
             department: userData.department,
             password: userData.password,
             createdAt: new Date().toISOString()
