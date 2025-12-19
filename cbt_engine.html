@@ -1,0 +1,4707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codex CBT Engine</title>
+    <style>
+        /* --- Global Styles and Variables --- */
+        :root {
+            --primary-color: #007bff;
+            --accent-color: #28a745;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-color: #e9ecef;
+            --dark-text: #343a40;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            padding: 0;
+            margin: 0;
+        }
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            padding: 10px; /* Reduced padding for mobile */
+            max-width: 1200px;
+            margin: auto;
+            gap: 20px;
+        }
+        .main-content {
+            flex-grow: 1;
+        }
+        .sidebar {
+            width: 300px;
+            flex-shrink: 0;
+        }
+
+        /* --- Header Styling (Fixed at the top for better visibility) --- */
+        .test-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: var(--card-bg);
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-header h2 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.3rem;
+        }
+        #finishTestBtn {
+            padding: 8px 15px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.5rem;
+            font-weight:300px;
+        }
+
+        /* --- Timer Styling (Integrated into the header on mobile) --- */
+        .timer-box {
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 30px;
+            background-color: #f8e6e6; 
+            border: 1px solid var(--danger-color);
+            margin: 0 15px; 
+        }
+        .timer-box h3 {
+            margin: 0;
+            font-size: 0.6rem;
+            color: var(--dark-text);
+        }
+        #timerDisplay, #timerDisplayMobile {
+            font-size: 1.5rem; 
+            font-weight: 600;
+            color: var(--danger-color);
+            line-height: 1.1;
+            margin: 0;
+        }
+        .timer-box.warning {
+            background-color: #fff3cd; 
+            border-color: var(--warning-color);
+        }
+        .warning-text {
+            color: var(--warning-color) !important;
+        }
+
+        /* --- Question Card --- */
+        .question-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        #questionNumber {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+        #questionText {
+            font-size: 1.1rem;
+            font-weight: 500;
+            line-height: 1.5;
+            color: var(--dark-text);
+            min-height: 50px;
+        }
+        
+        /* --- Options List --- */
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .option-item {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .option-label {
+            display: block;
+            background-color: #f1f1f1;
+            padding: 12px; 
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            border: 2px solid transparent;
+            font-size: 1rem;
+            color: var(--dark-text);
+        }
+        .option-label:hover {
+            background-color: #e9e9e9;
+        }
+        .option-item input[type="radio"] {
+            display: none;
+        }
+        .option-item input[type="radio"]:checked + .option-label {
+            background-color: #d4edda; 
+            border-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        /* --- Navigation Controls (Bottom Bar for Mobile) --- */
+        .navigation-controls {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+        }
+        .nav-btn {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #prevBtn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        #nextBtn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        #prevBtn:disabled, #nextBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* --- Sidebar/Navigator Styling --- */
+        .sidebar-panel {
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Progress Bar Styling */
+        .progress-container {
+            padding: 10px; 
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        .progress-bar {
+            height: 12px;
+            background-color: var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            width: 0%; 
+            background-color: var(--accent-color);
+            transition: width 0.4s ease-in-out;
+        }
+        .progress-bar-inner.high-progress {
+            background-color: var(--primary-color);
+        }
+
+        /* Question Navigator Grid Fix */
+        .navigator-title {
+            font-size: 1.2rem;
+            color: var(--dark-text);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        #navContainer {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* 6 columns wide */
+            gap: 8px; /* Smaller gap */
+        }
+        .nav-button {
+            padding: 8px 0; /* Reduced padding */
+            border: 1px solid var(--secondary-color);
+            background-color: #f1f1f1;
+            color: var(--dark-text);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+   #calcBtn {
+   padding: 6px 8px;
+   background: #343a40;
+   color: white;
+   border: none;
+   border-radius: 100px;
+   cursor: pointer;
+   font-size: 0.6rem;
+   min-width: 40px;
+   font-weight:300px:    
+   }
+        @media (max-width: 360px) {
+        #calcBtn {
+        font-size: 0.7rem;
+        padding: 5px 6px;
+        min-width: 70px;
+        }
+        }
+        /* Calculator Popup */
+        .calculator {
+        position: fixed;
+        bottom: 20px;
+        right: 40px;
+       width:90%;
+        max-width: 260px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        display: none;
+        z-index: 9999;
+        }
+        
+        .calc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #007bff;
+        color: white;
+        padding: 8px 10px;
+        border-radius: 10px 10px 0 0;
+        }
+        
+        .calc-header button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        }
+        
+        #calcDisplay {
+        width: 90%;
+        height: 45px;
+        font-size: 1.2rem;
+        text-align: right;
+        padding: 5px;
+        border: none;
+        border-bottom: 1px solid #ddd;
+        }
+        
+        .calc-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        }
+        
+      .calc-buttons button {
+      padding: 10px;
+      font-size: 0.9rem;
+      border: 1px solid #eee;
+      background: #f8f9fa;
+      cursor: pointer;
+      }
+        
+        .calc-buttons button:hover {
+        background: #e9ecef;
+        }
+        
+        .calc-buttons .clear {
+        grid-column: span 4;
+        background: #dc3545;
+        color: white;
+        }
+        .nav-button.current {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .nav-button.answered {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        .nav-button.answered.current {
+             background-color: #1e7e34; /* Darker green */
+        }
+
+        /* --- Media Queries for Desktop Layout --- */
+        @media (min-width: 900px) {
+            .app-layout {
+                padding: 20px;
+            }
+            /* Timer for desktop is in the sidebar */
+            .test-header #mobileTimerBox {
+                display: none !important; 
+            }
+            .sidebar #timerBox {
+                display: block !important;
+            }
+            .navigation-controls {
+                position: static; 
+                background-color: transparent;
+            }
+        }
+
+        /* Force Mobile Layout */
+        @media (max-width: 899px) {
+            .sidebar {
+                width: 100%;
+                order: 3; /* Move sidebar/navigator below main content */
+            }
+            .app-layout {
+                flex-direction: column; /* Stack main and sidebar */
+            }
+            .sidebar #timerBox {
+                display: none !important; /* Hide the sidebar timer on mobile */
+            }
+            .test-header #mobileTimerBox {
+                display: flex !important; /* Show the mobile header timer */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <div class="main-content">
+        <div class="test-header">
+            <h2 id="subjectTitle">MTH101</h2>
+            
+            <div id="mobileTimerBox" class="timer-box" style="display: none;">
+                <h3>TIME</h3>
+                <p id="timerDisplayMobile">--:--</p>
+            </div>
+            <button id="calcBtn" onclick="toggleCalculator()">🧮 Cal</button>
+            <button id="finishTestBtn" onclick="confirmSubmission()">FINISH TEST</button>
+        </div>
+
+        <div class="question-card">
+            <p id="questionNumber">Question X of Y</p>
+            <p id="questionTopic">Topic:</p>
+            <p id="questionText">The question text will appear here.</p>
+
+            <ul id="optionsList" class="options-list">
+                </ul>
+
+            <div class="navigation-controls">
+                <button id="prevBtn" class="nav-btn">← Previous</button>
+                <button id="nextBtn" class="nav-btn">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-panel">
+            <div id="timerBox" class="timer-box" style="display: none;">
+                <h3>Time Remaining</h3>
+                <p id="timerDisplay">--:--</p> 
+            </div>
+<div class="calculator" id="calculator" onmousedown="startDrag(event)" ontouchstart="startDrag(event)">
+    <div class="calc-header">
+        <span>Calculator</span>
+        <button onclick="toggleCalculator()">✖</button>
+    </div>
+
+    <input type="text" id="calcDisplay" readonly>
+
+    <div class="calc-buttons">
+        <button onclick="calcInput('7')">7</button>
+        <button onclick="calcInput('8')">8</button>
+        <button onclick="calcInput('9')">9</button>
+        <button onclick="calcInput('/')">÷</button>
+
+        <button onclick="calcInput('4')">4</button>
+        <button onclick="calcInput('5')">5</button>
+        <button onclick="calcInput('6')">6</button>
+        <button onclick="calcInput('*')">×</button>
+
+        <button onclick="calcInput('1')">1</button>
+        <button onclick="calcInput('2')">2</button>
+        <button onclick="calcInput('3')">3</button>
+        <button onclick="calcInput('-')">−</button>
+
+        <button onclick="calcInput('0')">0</button>
+        <button onclick="calcInput('.')">.</button>
+        <button onclick="calculate()">=</button>
+        <button onclick="calcInput('+')">+</button>
+<button onclick="squareRoot()">√</button>
+        <button class="clear" onclick="clearCalc()">C</button>
+    </div>
+</div>
+            <div class="progress-container">
+                <div class="progress-text">
+                    <span>Progress</span>
+                    <span id="progressCount">0 / 0</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressBarInner" class="progress-bar-inner"></div>
+                </div>
+            </div>
+
+            <div class="navigator-title">Question Navigator</div>
+            <div id="navContainer">
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* --- I. DATA STRUCTURE --- */
+// This is the expanded data set
+const CBT_DATA = {
+"MTH101": [
+    // --- 10 Questions for Set Theory ---
+    {
+        q: "If A = {1, 2, 3, 4} and B = {3, 4, 5, 6}, find the cardinality of A  intersection  B.",
+        options: ["1", "2", "3", "4"],
+        ans: "2",
+        topic: "Set Theory"
+    },
+    {
+        q: "The set of all integers is a subset of the set of all:",
+        options: ["Natural numbers", "Rational numbers", "Irrational numbers", "Whole numbers"],
+        ans: "Rational numbers",
+        topic: "Set Theory"
+    },
+    {
+        q: "Given U = {1, 2, ..., 10} and A = {2, 4, 6, 8, 10}, find A^c.",
+        options: ["{1, 3, 5, 7, 9}", "{1, 2, 3}", "{5, 7, 9}", "{2, 4, 6}"],
+        ans: "{1, 3, 5, 7, 9}",
+        topic: "Set Theory"
+    },
+    {
+        q: "Which symbol denotes a proper subset?",
+        options: [" subset of ", " subset of eq", " element of ", " union "],
+        ans: " subset of ",
+        topic: "Set Theory"
+    },
+    {
+        q: "If P has 5 elements, how many subsets does P have?",
+        options: ["16", "25", "32", "64"],
+        ans: "32",
+        topic: "Set Theory"
+    },
+    {
+        q: "What is the result of A  union  A?",
+        options: [" empty set ", "A^c", "U", "A"],
+        ans: "A",
+        topic: "Set Theory"
+    },
+    {
+        q: "In a Venn diagram, the overlapping region of two circles represents the:",
+        options: ["Union", "Complement", "Intersection", "Difference"],
+        ans: "Intersection",
+        topic: "Set Theory"
+    },
+    {
+        q: "If A = {a, b, c} and B = {d, e}, what is A  x  B?",
+        options: ["{(a, d), (b, e)}", "A set with 5 elements", "A set with 6 elements", "{(a, d), (a, e), (b, d), (b, e), (c, d)} "],
+        ans: "A set with 6 elements",
+        topic: "Set Theory"
+    },
+    {
+        q: "The empty set is a subset of every set.",
+        options: ["True", "False"],
+        ans: "True",
+        topic: "Set Theory"
+    },
+    {
+        q: "If n(A)=10, n(B)=8, and n(A  intersection  B)=3, find n(A  union  B).",
+        options: ["15", "18", "21", "23"],
+        ans: "15",
+        topic: "Set Theory"
+    },
+    
+    // --- 10 Questions for Number Systems ---
+    {
+        q: "Which of the following is an irrational number?",
+        options: ["sqrt(4)", "1/3", "0.333...", " pi "],
+        ans: " pi ",
+        topic: "Number Systems"
+    },
+    {
+        q: "Convert the binary number 1011_2 to base 10.",
+        options: ["10", "11", "12", "13"],
+        ans: "11",
+        topic: "Number Systems"
+    },
+    {
+        q: "What is the remainder when 23 is divided by 5?",
+        options: ["1", "2", "3", "4"],
+        ans: "3",
+        topic: "Number Systems"
+    },
+    {
+        q: "Simplify the expression 3^2 + 4^0.",
+        options: ["7", "9", "10", "13"],
+        ans: "10",
+        topic: "Number Systems"
+    },
+    {
+        q: "The set of whole numbers includes:",
+        options: ["Negative integers", "Zero and positive integers", "Decimals", "Only positive integers"],
+        ans: "Zero and positive integers",
+        topic: "Number Systems"
+    },
+    {
+        q: "What is the square root of 144?",
+        options: ["11", "12", "14", "16"],
+        ans: "12",
+        topic: "Number Systems"
+    },
+    {
+        q: "The product of two rational numbers is always:",
+        options: ["Irrational", "Integer", "Rational", "Complex"],
+        ans: "Rational",
+        topic: "Number Systems"
+    },
+    {
+        q: "Convert 0.625 to a fraction.",
+        options: ["3/5", "5/8", "1/2", "7/10"],
+        ans: "5/8",
+        topic: "Number Systems"
+    },
+    {
+        q: "Which property is shown: a + (b + c) = (a + b) + c?",
+        options: ["Commutative", "Associative", "Distributive", "Identity"],
+        ans: "Associative",
+        topic: "Number Systems"
+    },
+    {
+        q: "A number that can be expressed as a fraction p/q, where p and q are integers and q \\neq 0 is a:",
+        options: ["Prime number", "Rational number", "Odd number", "Natural number"],
+        ans: "Rational number",
+        topic: "Number Systems"
+    },
+
+    // --- 10 Questions for Mathematical Induction ---
+    {
+        q: "The first step in mathematical induction is the basis step, which verifies the statement for n=:",
+        options: ["n-1", "k", "1", "k+1"],
+        ans: "1",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "The induction hypothesis assumes the statement is true for an arbitrary integer n=k, where k \\ge:",
+        options: ["0", "1", "2", "-1"],
+        ans: "1",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "The inductive step proves the statement is true for n=:",
+        options: ["k", "k+1", "n-1", "n"],
+        ans: "k+1",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "Mathematical Induction is used to prove statements about:",
+        options: ["Real numbers", "Complex numbers", "Positive integers", "Functions"],
+        ans: "Positive integers",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "Which method is NOT a formal proof technique?",
+        options: ["Proof by Induction", "Proof by Contradiction", "Proof by Authority", "Direct Proof"],
+        ans: "Proof by Authority",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "The principle of mathematical induction is equivalent to the well-ordering principle.",
+        options: ["True", "False"],
+        ans: "True",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "The formula for the sum of the first n positive integers is:",
+        options: ["n^2", "n(n+1)", "n(n+1)/2", "n^2(n+1)/4"],
+        ans: "n(n+1)/2",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "In a strong induction proof, what is assumed true in the inductive hypothesis?",
+        options: ["Only P(k)", "Only P(1)", "P(1), P(2), ..., P(k)", "P(k+1)"],
+        ans: "P(1), P(2), ..., P(k)",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "If the basis step fails, the statement is always false.",
+        options: ["True", "False"],
+        ans: "False",
+        topic: "Mathematical Induction"
+    },
+    {
+        q: "What is the minimum starting value for n often used in induction proofs?",
+        options: ["0", "1", "2", "Any integer"],
+        ans: "1",
+        topic: "Mathematical Induction"
+    },
+
+    // --- 10 Questions for Sequences & Series ---
+    {
+        q: "Find the 5th term of the arithmetic sequence 3, 7, 11, ...",
+        options: ["15", "17", "19", "21"],
+        ans: "19",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "What is the common ratio of the geometric sequence 2, 6, 18, ...?",
+        options: ["2", "3", "4", "6"],
+        ans: "3",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "The sum of an infinite geometric series converges if the absolute value of the common ratio (|r|) is:",
+        options: ["|r| > 1", "|r| < 1", "|r| = 1", "|r| \\ge 1"],
+        ans: "|r| < 1",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "What is the formula for the n-th term of an arithmetic sequence?",
+        options: ["a_n = a_1 * r^{n-1}", "a_n = a_1 + (n-1)d", "S_n = n/2(a_1+a_n)", "S_n = a_1/1-r"],
+        ans: "a_n = a_1 + (n-1)d",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "Calculate the sum of the first 4 terms of the sequence given by a_n = 2n + 1.",
+        options: ["16", "20", "24", "28"],
+        ans: "24",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "In a geometric sequence, the ratio of any term to its preceding term is constant. This is called the:",
+        options: ["Common difference", "Common ratio", "Term value", "Constant sum"],
+        ans: "Common ratio",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "Which of the following is an example of a Fibonacci sequence?",
+        options: ["1, 2, 4, 8, ...", "1, 1, 2, 3, 5, 8, ...", "5, 10, 15, 20, ...", "2, 4, 6, 8, ..."],
+        ans: "1, 1, 2, 3, 5, 8, ...",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "Find the sum of the series \\sum_{n=1}^{3} (2n-1).",
+        options: ["6", "9", "12", "15"],
+        ans: "9",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "The difference between consecutive terms in an arithmetic sequence is called the:",
+        options: ["Common difference", "Common ratio", "Arithmetic mean", "Difference constant"],
+        ans: "Common difference",
+        topic: "Sequences & Series"
+    },
+    {
+        q: "If the first term of a GP is 1 and the common ratio is 2, what is the 4th term?",
+        options: ["4", "6", "8", "16"],
+        ans: "8",
+        topic: "Sequences & Series"
+    },
+
+    // --- 10 Questions for Quadratic Equations ---
+    {
+        q: "Find the roots of the equation x^2 - 5x + 6 = 0.",
+        options: ["x=2, x=3", "x=-2, x=3", "x=-2, x=-3", "x=1, x=6"],
+        ans: "x=2, x=3",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "The discriminant (\\Delta) of a quadratic equation ax^2+bx+c=0 is given by:",
+        options: ["b^2 - 4ac", "4ac - b^2", "-b/2a", "b^2 + 4ac"],
+        ans: "b^2 - 4ac",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "If the discriminant (\\Delta) is zero, the quadratic equation has:",
+        options: ["No real roots", "Two distinct real roots", "One repeated real root", "Complex roots"],
+        ans: "One repeated real root",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "What is the vertex of the parabola y = (x-2)^2 + 3?",
+        options: ["(2, 3)", "(-2, 3)", "(3, 2)", "(-3, 2)"],
+        ans: "(2, 3)",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "For the equation 2x^2 - 4x - 1 = 0, what is the sum of the roots?",
+        options: ["-2", "2", "-4", "4"],
+        ans: "2",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "The standard form of a quadratic equation is:",
+        options: ["ax + by + c = 0", "ax^2 + bx + c = 0", "ax^3 + bx^2 + c = 0", "x^2 = c"],
+        ans: "ax^2 + bx + c = 0",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "Which method is not typically used to solve quadratic equations?",
+        options: ["Factoring", "Quadratic formula", "Completing the square", "Long division"],
+        ans: "Long division",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "The roots of x^2 + 9 = 0 are:",
+        options: ["3, -3", "9, -9", "3i, -3i", "No solutions"],
+        ans: "3i, -3i",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "The quadratic formula is x = :",
+        options: ["\\frac{b \\pm sqrt(b^2 - 4ac)}{2a}", "\\frac{-b \\pm sqrt(b^2 - 4ac)}{2a}", "2a/-b \\pm sqrt(b^2 - 4ac)", "-b/2a"],
+        ans: "\\frac{-b \\pm sqrt(b^2 - 4ac)}{2a}",
+        topic: "Quadratic Equations"
+    },
+    {
+        q: "If the product of the roots of 3x^2 + 5x + k = 0 is 2/3, find k.",
+        options: ["1", "2", "3", "4"],
+        ans: "2",
+        topic: "Quadratic Equations"
+    },
+    
+    // --- 10 Questions for Complex Numbers ---
+    {
+        q: "Simplify the expression i^{10}.",
+        options: ["i", "-i", "1", "-1"],
+        ans: "-1",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "What is the conjugate of the complex number 3 + 4i?",
+        options: ["-3 + 4i", "3 - 4i", "4 + 3i", "3 + 4i"],
+        ans: "3 - 4i",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "Calculate (2 + i) + (3 - 5i).",
+        options: ["5 - 4i", "5 + 6i", "1 - 4i", "5"],
+        ans: "5 - 4i",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "The modulus of a complex number z = x + yi is given by:",
+        options: ["x - yi", "sqrt(x^2 + y^2)", "x^2 + y^2", "x + y"],
+        ans: "sqrt(x^2 + y^2)",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "Convert the complex number i to polar form.",
+        options: ["1(\\cos 0 + i \\sin 0)", "1(\\cos 90 + i \\sin 90)", "1(\\cos 180 + i \\sin 180)", "1(\\cos 270 + i \\sin 270)"],
+        ans: "1(\\cos 90 + i \\sin 90)",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "The complex number a + bi lies on the imaginary axis if:",
+        options: ["a=0", "b=0", "a=b", "a \\neq 0 and b \\neq 0"],
+        ans: "a=0",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "The value of i^2 is:",
+        options: ["-1", "1", "i", "-i"],
+        ans: "-1",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "Find the product of (2 + i) and (2 - i).",
+        options: ["3", "5", "4 - i^2", "2 - 4i"],
+        ans: "5",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "The argument (angle) of z = -1 is:",
+        options: ["0^{ degrees}", "90^{ degrees}", "180^{ degrees}", "270^{ degrees}"],
+        ans: "180^{ degrees}",
+        topic: "Complex Numbers"
+    },
+    {
+        q: "The real part of z = 5i - 7 is:",
+        options: ["5", "-7", "5i", "7"],
+        ans: "-7",
+        topic: "Complex Numbers"
+    },
+
+    // --- 10 Questions for Trigonometry ---
+    {
+        q: "The value of \\sin(30^{ degrees}) is:",
+        options: ["1/2", "\\frac{sqrt(3)}{2}", "1", "\\frac{sqrt(2)}{2}"],
+        ans: "1/2",
+        topic: "Trigonometry"
+    },
+    {
+        q: "Convert  pi /4 radians to degrees.",
+        options: ["30^{ degrees}", "45^{ degrees}", "60^{ degrees}", "90^{ degrees}"],
+        ans: "45^{ degrees}",
+        topic: "Trigonometry"
+    },
+    {
+        q: "Which of the following is an identity?",
+        options: ["\\sin^2\\theta - \\cos^2\\theta = 1", "\\sin^2\\theta + \\cos^2\\theta = 1", "\\tan\\theta = \\cos\\theta/\\sin\\theta", "\\sin(2\\theta) = 2\\sin\\theta"],
+        ans: "\\sin^2\\theta + \\cos^2\\theta = 1",
+        topic: "Trigonometry"
+    },
+    {
+        q: "If \\cos\\theta = 0.6, what is the value of \\sin\\theta (assuming \\theta is acute)?",
+        options: ["0.4", "0.7", "0.8", "0.9"],
+        ans: "0.8",
+        topic: "Trigonometry"
+    },
+    {
+        q: "The period of the function f(x) = \\sin(2x) is:",
+        options: [" pi ", "2 pi ", " pi /2", "4 pi "],
+        ans: " pi ",
+        topic: "Trigonometry"
+    },
+    {
+        q: "The angle 360^{ degrees} is equivalent to what in radians?",
+        options: [" pi ", "2 pi ", "3 pi ", " pi /2"],
+        ans: "2 pi ",
+        topic: "Trigonometry"
+    },
+    {
+        q: "In a right-angled triangle, the sine of an angle is the ratio of:",
+        options: ["Adjacent/Hypotenuse", "Opposite/Adjacent", "Opposite/Hypotenuse", "Hypotenuse/Opposite"],
+        ans: "Opposite/Hypotenuse",
+        topic: "Trigonometry"
+    },
+    {
+        q: "Calculate \\tan(45^{ degrees}).",
+        options: ["0", "1/sqrt(2)", "sqrt(3)", "1"],
+        ans: "1",
+        topic: "Trigonometry"
+    },
+    {
+        q: "The graph of y = \\cos x passes through the point:",
+        options: ["(0, 0)", "(0, 1)", "( pi , 1)", "( pi /2, 1)"],
+        ans: "(0, 1)",
+        topic: "Trigonometry"
+    },
+    {
+        q: "The reciprocal of the tangent function is the:",
+        options: ["Secant", "Cosecant", "Cotangent", "Sine"],
+        ans: "Cotangent",
+        topic: "Trigonometry"
+    }
+],
+
+"PHY101": [
+    
+    
+    /* ================= UNITS & DIMENSIONS (15) ================= */
+    {
+    q: "The SI unit of length is:",
+    options: ["Meter", "Centimeter", "Kilometer", "Millimeter"],
+    ans: "Meter",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Which of the following is a derived unit?",
+    options: ["Kilogram", "Second", "Newton", "Ampere"],
+    ans: "Newton",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "The SI unit of mass is:",
+    options: ["Gram", "Kilogram", "Ton", "Pound"],
+    ans: "Kilogram",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Velocity has the dimension:",
+    options: ["LT⁻¹", "LT", "L²T⁻¹", "T⁻¹"],
+    ans: "LT⁻¹",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Which physical quantity has no unit?",
+    options: ["Force", "Density", "Strain", "Velocity"],
+    ans: "Strain",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "The dimension of acceleration is:",
+    options: ["LT⁻¹", "LT⁻²", "L²T⁻¹", "T⁻²"],
+    ans: "LT⁻²",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Which unit is used to measure force?",
+    options: ["Joule", "Newton", "Watt", "Pascal"],
+    ans: "Newton",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "SI unit of time is:",
+    options: ["Minute", "Hour", "Second", "Day"],
+    ans: "Second",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "The dimension of energy is:",
+    options: ["ML²T⁻²", "MLT⁻²", "M²LT⁻¹", "LT⁻¹"],
+    ans: "ML²T⁻²",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Which of the following is a fundamental quantity?",
+    options: ["Force", "Velocity", "Time", "Density"],
+    ans: "Time",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "The SI unit of temperature is:",
+    options: ["Celsius", "Fahrenheit", "Kelvin", "Rankine"],
+    ans: "Kelvin",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Which is NOT an SI base unit?",
+    options: ["Ampere", "Mole", "Newton", "Kelvin"],
+    ans: "Newton",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Dimensions are used to:",
+    options: ["Measure quantities", "Check equations", "Find errors", "Convert units"],
+    ans: "Check equations",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "The unit of power is:",
+    options: ["Joule", "Newton", "Watt", "Pascal"],
+    ans: "Watt",
+    topic: "Units & Dimensions"
+    },
+    {
+    q: "Which quantity has dimension T⁻¹?",
+    options: ["Speed", "Frequency", "Acceleration", "Energy"],
+    ans: "Frequency",
+    topic: "Units & Dimensions"
+    },
+    
+    /* ================= VECTORS & SCALARS (15) ================= */
+    {
+    q: "Which of the following is a scalar quantity?",
+    options: ["Velocity", "Force", "Speed", "Acceleration"],
+    ans: "Speed",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "A vector quantity has:",
+    options: ["Magnitude only", "Direction only", "Both magnitude and direction", "Neither"],
+    ans: "Both magnitude and direction",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Which is a vector quantity?",
+    options: ["Distance", "Speed", "Displacement", "Time"],
+    ans: "Displacement",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Scalar quantities are added using:",
+    options: ["Vector law", "Triangle law", "Algebraic method", "Parallelogram law"],
+    ans: "Algebraic method",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Which law is used for vector addition?",
+    options: ["Newton’s law", "Triangle law", "Ohm’s law", "Boyle’s law"],
+    ans: "Triangle law",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Resultant of two vectors depends on:",
+    options: ["Magnitude only", "Direction only", "Both magnitude and direction", "Time"],
+    ans: "Both magnitude and direction",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Which of these is NOT a vector?",
+    options: ["Momentum", "Force", "Energy", "Acceleration"],
+    ans: "Energy",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "The SI unit of displacement is:",
+    options: ["Meter", "Meter per second", "Newton", "Second"],
+    ans: "Meter",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Which quantity changes when direction changes?",
+    options: ["Speed", "Mass", "Velocity", "Time"],
+    ans: "Velocity",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Vectors are represented graphically by:",
+    options: ["Lines", "Arrows", "Dots", "Curves"],
+    ans: "Arrows",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Which is a scalar quantity?",
+    options: ["Work", "Force", "Velocity", "Displacement"],
+    ans: "Work",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "A vector with zero magnitude is called:",
+    options: ["Null vector", "Unit vector", "Scalar vector", "Base vector"],
+    ans: "Null vector",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Unit vector has magnitude:",
+    options: ["0", "1", "10", "Depends"],
+    ans: "1",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Which is a vector quantity?",
+    options: ["Temperature", "Pressure", "Force", "Energy"],
+    ans: "Force",
+    topic: "Vectors & Scalars"
+    },
+    {
+    q: "Scalar quantities are independent of:",
+    options: ["Magnitude", "Direction", "Unit", "Value"],
+    ans: "Direction",
+    topic: "Vectors & Scalars"
+    },
+    
+    /* ================= NEWTON’S LAWS (15) ================= */
+    {
+    q: "Newton’s first law is also known as:",
+    options: ["Law of acceleration", "Law of inertia", "Law of action", "Law of reaction"],
+    ans: "Law of inertia",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Inertia depends on:",
+    options: ["Speed", "Velocity", "Mass", "Force"],
+    ans: "Mass",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Newton’s second law relates force to:",
+    options: ["Velocity", "Momentum", "Acceleration", "Mass only"],
+    ans: "Acceleration",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "The formula F = ma is from:",
+    options: ["First law", "Second law", "Third law", "Law of gravitation"],
+    ans: "Second law",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Newton’s third law states that:",
+    options: ["Force equals mass", "Every action has an equal and opposite reaction", "Objects move uniformly", "Force is proportional to velocity"],
+    ans: "Every action has an equal and opposite reaction",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Action and reaction forces act on:",
+    options: ["Same body", "Different bodies", "Same point", "Same direction"],
+    ans: "Different bodies",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Which law explains recoil of a gun?",
+    options: ["First", "Second", "Third", "Gravitation"],
+    ans: "Third",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Momentum is the product of:",
+    options: ["Mass and velocity", "Force and time", "Mass and acceleration", "Velocity and time"],
+    ans: "Mass and velocity",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "If no external force acts, momentum is:",
+    options: ["Zero", "Constant", "Increasing", "Decreasing"],
+    ans: "Constant",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Which quantity changes due to force?",
+    options: ["Mass", "Momentum", "Time", "Distance"],
+    ans: "Momentum",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "The unit of force is:",
+    options: ["Joule", "Newton", "Watt", "Pascal"],
+    ans: "Newton",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Newton’s laws apply mainly to:",
+    options: ["Resting bodies", "Moving bodies", "Macroscopic bodies", "Atomic particles"],
+    ans: "Macroscopic bodies",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Which law introduces inertia?",
+    options: ["First law", "Second law", "Third law", "Gravitation"],
+    ans: "First law",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Force is a:",
+    options: ["Scalar", "Vector", "Constant", "Derived scalar"],
+    ans: "Vector",
+    topic: "Newton’s Laws"
+    },
+    {
+    q: "Acceleration is directly proportional to:",
+    options: ["Mass", "Force", "Time", "Distance"],
+    ans: "Force",
+    topic: "Newton’s Laws"
+    },
+    
+    /* ================= KINEMATICS (15) ================= */
+    {
+    q: "Kinematics deals with:",
+    options: ["Causes of motion", "Effects of force", "Motion without cause", "Energy"],
+    ans: "Motion without cause",
+    topic: "Kinematics"
+    },
+    {
+    q: "Speed is defined as:",
+    options: ["Distance/time", "Displacement/time", "Velocity/time", "Acceleration/time"],
+    ans: "Distance/time",
+    topic: "Kinematics"
+    },
+    {
+    q: "Velocity differs from speed because it has:",
+    options: ["Magnitude", "Direction", "Unit", "Distance"],
+    ans: "Direction",
+    topic: "Kinematics"
+    },
+    {
+    q: "Acceleration is the rate of change of:",
+    options: ["Speed", "Velocity", "Distance", "Time"],
+    ans: "Velocity",
+    topic: "Kinematics"
+    },
+    {
+    q: "Uniform motion means:",
+    options: ["Constant speed", "Constant acceleration", "Increasing speed", "Decreasing speed"],
+    ans: "Constant speed",
+    topic: "Kinematics"
+    },
+    {
+    q: "The SI unit of acceleration is:",
+    options: ["m/s", "m/s²", "m²/s", "s/m"],
+    ans: "m/s²",
+    topic: "Kinematics"
+    },
+    {
+    q: "Displacement can be:",
+    options: ["Negative", "Positive", "Zero", "All"],
+    ans: "All",
+    topic: "Kinematics"
+    },
+    {
+    q: "Which graph gives velocity?",
+    options: ["Distance-time slope", "Time-distance", "Speed-time area", "Distance-area"],
+    ans: "Distance-time slope",
+    topic: "Kinematics"
+    },
+    {
+    q: "Area under velocity-time graph gives:",
+    options: ["Speed", "Acceleration", "Distance", "Displacement"],
+    ans: "Displacement",
+    topic: "Kinematics"
+    },
+    {
+    q: "Retardation means:",
+    options: ["Positive acceleration", "Zero acceleration", "Negative acceleration", "Constant velocity"],
+    ans: "Negative acceleration",
+    topic: "Kinematics"
+    },
+    {
+    q: "Motion in a straight line is called:",
+    options: ["Circular motion", "Rectilinear motion", "Random motion", "Rotational motion"],
+    ans: "Rectilinear motion",
+    topic: "Kinematics"
+    },
+    {
+    q: "Initial velocity is denoted by:",
+    options: ["u", "v", "a", "s"],
+    ans: "u",
+    topic: "Kinematics"
+    },
+    {
+    q: "Final velocity is denoted by:",
+    options: ["u", "v", "a", "s"],
+    ans: "v",
+    topic: "Kinematics"
+    },
+    {
+    q: "Equation v = u + at is a:",
+    options: ["Dynamics equation", "Kinematic equation", "Energy equation", "Force equation"],
+    ans: "Kinematic equation",
+    topic: "Kinematics"
+    },
+    {
+    q: "Which motion has constant acceleration?",
+    options: ["Uniform motion", "Uniformly accelerated motion", "Circular motion", "Random motion"],
+    ans: "Uniformly accelerated motion",
+    topic: "Kinematics"
+    },
+    
+    /* ================= CENTER OF MASS (15) ================= */
+    {
+    q: "Center of mass is the point where:",
+    options: ["Mass is zero", "Total mass acts", "Velocity is zero", "Force is applied"],
+    ans: "Total mass acts",
+    topic: "center of mass"
+    },
+    {
+    q: "For a uniform rod, center of mass lies at:",
+    options: ["One end", "Middle", "Quarter", "Random point"],
+    ans: "Middle",
+    topic: "center of mass"
+    },
+    {
+    q: "Center of mass depends on:",
+    options: ["Shape", "Mass distribution", "Volume", "Speed"],
+    ans: "Mass distribution",
+    topic: "center of mass"
+    },
+    {
+    q: "Center of mass of a symmetrical body is at:",
+    options: ["Edge", "Center", "Bottom", "Top"],
+    ans: "Center",
+    topic: "center of mass"
+    },
+    {
+    q: "If mass is evenly distributed, center of mass is:",
+    options: ["Outside body", "At one end", "At geometric center", "Undefined"],
+    ans: "At geometric center",
+    topic: "center of mass"
+    },
+    {
+    q: "Center of mass can lie outside the body for:",
+    options: ["Solid sphere", "Ring", "Cube", "Rod"],
+    ans: "Ring",
+    topic: "center of mass"
+    },
+    {
+    q: "Which unit measures mass?",
+    options: ["Newton", "Kilogram", "Gram-force", "Joule"],
+    ans: "Kilogram",
+    topic: "center of mass"
+    },
+    {
+    q: "Center of mass is important in studying:",
+    options: ["Heat", "Motion", "Electricity", "Sound"],
+    ans: "Motion",
+    topic: "center of mass"
+    },
+    {
+    q: "For two equal masses, center of mass lies:",
+    options: ["Near heavier mass", "At midpoint", "Outside", "Undefined"],
+    ans: "At midpoint",
+    topic: "center of mass"
+    },
+    {
+    q: "The center of mass of Earth lies:",
+    options: ["On surface", "Above surface", "At center", "Below surface"],
+    ans: "At center",
+    topic: "center of mass"
+    },
+    {
+    q: "Which factor does NOT affect center of mass?",
+    options: ["Shape", "Mass distribution", "Orientation", "Temperature"],
+    ans: "Temperature",
+    topic: "center of mass"
+    },
+    {
+    q: "Center of gravity is similar to center of mass when:",
+    options: ["Gravity is uniform", "Gravity varies", "Object is moving", "Object is rotating"],
+    ans: "Gravity is uniform",
+    topic: "center of mass"
+    },
+    {
+    q: "The center of mass of a triangle is at:",
+    options: ["Vertex", "Midpoint", "Centroid", "Circumcenter"],
+    ans: "Centroid",
+    topic: "center of mass"
+    },
+    {
+    q: "Which body has center of mass at its center?",
+    options: ["Ring", "Uniform sphere", "Arc", "Boomerang"],
+    ans: "Uniform sphere",
+    topic: "center of mass"
+    },
+    {
+    q: "Center of mass helps in analyzing:",
+    options: ["Equilibrium", "Heat flow", "Electric current", "Magnetism"],
+    ans: "Equilibrium",
+    topic: "center of mass"
+    },
+    
+    /* ================= WORK, ENERGY & POWER (15) ================= */
+    {
+    q: "Work is done when a force causes:",
+    options: ["Acceleration", "Displacement", "Velocity", "Energy"],
+    ans: "Displacement",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "The SI unit of work is:",
+    options: ["Newton", "Watt", "Joule", "Pascal"],
+    ans: "Joule",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Energy is the ability to:",
+    options: ["Move", "Do work", "Apply force", "Gain speed"],
+    ans: "Do work",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Kinetic energy depends on:",
+    options: ["Mass only", "Velocity only", "Mass and velocity", "Height"],
+    ans: "Mass and velocity",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Potential energy depends on:",
+    options: ["Speed", "Height", "Time", "Acceleration"],
+    ans: "Height",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "The SI unit of power is:",
+    options: ["Joule", "Watt", "Newton", "Pascal"],
+    ans: "Watt",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Power is defined as:",
+    options: ["Work × time", "Work / time", "Energy × time", "Force × distance"],
+    ans: "Work / time",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Which of these is energy?",
+    options: ["Force", "Momentum", "Heat", "Acceleration"],
+    ans: "Heat",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "The law of conservation of energy states that:",
+    options: ["Energy is destroyed", "Energy is created", "Energy is conserved", "Energy is lost"],
+    ans: "Energy is conserved",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Which energy is due to motion?",
+    options: ["Potential", "Kinetic", "Heat", "Chemical"],
+    ans: "Kinetic",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Gravitational potential energy is given by:",
+    options: ["½mv²", "mgh", "mgv", "Fv"],
+    ans: "mgh",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Power is a:",
+    options: ["Scalar", "Vector", "Both", "None"],
+    ans: "Scalar",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Which has highest kinetic energy?",
+    options: ["Resting body", "Slow body", "Fast moving body", "Stationary object"],
+    ans: "Fast moving body",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "1 horsepower is approximately:",
+    options: ["746 W", "100 W", "1000 W", "500 W"],
+    ans: "746 W",
+    topic: "Work, Energy, Power"
+    },
+    {
+    q: "Energy cannot be:",
+    options: ["Converted", "Transferred", "Created or destroyed", "Stored"],
+    ans: "Created or destroyed",
+    topic: "Work, Energy, Power"
+    },
+    
+    /* ================= THERMODYNAMICS (15) ================= */
+    {
+    q: "Thermodynamics deals with:",
+    options: ["Heat and energy", "Motion", "Sound", "Light"],
+    ans: "Heat and energy",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Temperature measures the degree of:",
+    options: ["Hotness", "Mass", "Pressure", "Energy"],
+    ans: "Hotness",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "The SI unit of heat is:",
+    options: ["Calorie", "Joule", "Watt", "Newton"],
+    ans: "Joule",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Which law states energy conservation?",
+    options: ["First law", "Second law", "Third law", "Zeroth law"],
+    ans: "First law",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "The second law of thermodynamics states that heat flows from:",
+    options: ["Cold to hot", "Hot to cold", "Equal bodies", "Any direction"],
+    ans: "Hot to cold",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Which quantity is measured in Kelvin?",
+    options: ["Heat", "Temperature", "Pressure", "Energy"],
+    ans: "Temperature",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Heat is transferred by:",
+    options: ["Conduction", "Convection", "Radiation", "All"],
+    ans: "All",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Absolute zero temperature is:",
+    options: ["0°C", "-273°C", "100°C", "-100°C"],
+    ans: "-273°C",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Which is a thermodynamic system?",
+    options: ["Gas in a cylinder", "Moving car", "Light ray", "Sound wave"],
+    ans: "Gas in a cylinder",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Entropy is a measure of:",
+    options: ["Energy", "Disorder", "Temperature", "Pressure"],
+    ans: "Disorder",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Which process occurs at constant temperature?",
+    options: ["Adiabatic", "Isothermal", "Isochoric", "Isobaric"],
+    ans: "Isothermal",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Which process occurs without heat exchange?",
+    options: ["Isothermal", "Adiabatic", "Isobaric", "Isochoric"],
+    ans: "Adiabatic",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Heat engine converts:",
+    options: ["Work to heat", "Heat to work", "Energy to mass", "Mass to heat"],
+    ans: "Heat to work",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Efficiency of a heat engine is always:",
+    options: ["100%", "< 100%", "0%", "> 100%"],
+    ans: "< 100%",
+    topic: "Thermodynamics"
+    },
+    {
+    q: "Zeroth law of thermodynamics defines:",
+    options: ["Energy", "Work", "Temperature", "Entropy"],
+    ans: "Temperature",
+    topic: "Thermodynamics"
+    },
+    
+    
+    
+    // --- 10 Questions for Units & Dimensions ---
+    {
+        q: "The SI unit of force is the:",
+        options: ["Joule", "Watt", "Newton", "Pascal"],
+        ans: "Newton",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "What is the dimension of velocity?",
+        options: ["[LT^{-1}]", "[L^2T^{-1}]", "[LT^{-2}]", "[M LT^{-1}]"],
+        ans: "[LT^{-1}]",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "Which quantity has the same dimension as work?",
+        options: ["Force", "Power", "Momentum", "Energy"],
+        ans: "Energy",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "The unit of electric current in the SI system is:",
+        options: ["Volt", "Ohm", "Ampere", "Coulomb"],
+        ans: "Ampere",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "The prefix 'mega' (M) represents what factor?",
+        options: ["10^3", "10^6", "10^9", "10^{-6}"],
+        ans: "10^6",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "Which of the following is a derived unit?",
+        options: ["Kilogram", "Meter", "Second", "Volume"],
+        ans: "Volume",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "What is the unit of pressure?",
+        options: ["Newton", "Pascal", "Joule", "Watt"],
+        ans: "Pascal",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "The dimension of momentum (p = mv) is:",
+        options: ["[M L T^{-1}]", "[M L^2 T^{-2}]", "[M T^{-1}]", "[L T^{-1}]"],
+        ans: "[M L T^{-1}]",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "A measurement of 1 nanometer is equivalent to:",
+        options: ["10^{-6} m", "10^{-9} m", "10^{-12} m", "10^{-3} m"],
+        ans: "10^{-9} m",
+        topic: "Units & Dimensions"
+    },
+    {
+        q: "Which of the following is a fundamental quantity?",
+        options: ["Area", "Density", "Temperature", "Speed"],
+        ans: "Temperature",
+        topic: "Units & Dimensions"
+    },
+    
+    // --- 10 Questions for Vectors & Scalars ---
+    {
+        q: "Which of the following is a scalar quantity?",
+        options: ["Displacement", "Velocity", "Mass", "Force"],
+        ans: "Mass",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "The resultant of two vectors vec A and vec B can be found using the:",
+        options: ["Pythagorean theorem only", "Parallelogram law", "Ohm's law", "Boyle's law"],
+        ans: "Parallelogram law",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "If the angle between two vectors is 90^{ degrees}, their dot product is:",
+        options: ["Maximum", "Zero", "Minimum", "Negative"],
+        ans: "Zero",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "Velocity is classified as a:",
+        options: ["Scalar quantity", "Fundamental quantity", "Vector quantity", "Unit quantity"],
+        ans: "Vector quantity",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "The vector product (vec A  x  vec B) of two parallel vectors is:",
+        options: ["Zero", "Maximum", "A scalar quantity", "Perpendicular to A and B"],
+        ans: "Zero",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "Distance is the magnitude of:",
+        options: ["Acceleration", "Displacement", "Force", "Velocity"],
+        ans: "Displacement",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "If vec A = 3i + 4j, what is the magnitude of vec A?",
+        options: ["3", "4", "5", "7"],
+        ans: "5",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "The subtraction of a vector vec A - vec B is equivalent to:",
+        options: ["vec B - vec A", "vec A + (-vec B)", "|A| - |B|", "vec A  x  vec B"],
+        ans: "vec A + (-vec B)",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "What is the angle between vec A and vec B if their cross product is maximum?",
+        options: ["0^{ degrees}", "45^{ degrees}", "90^{ degrees}", "180^{ degrees}"],
+        ans: "90^{ degrees}",
+        topic: "Vectors & Scalars"
+    },
+    {
+        q: "Torque (a turning force) is an example of a:",
+        options: ["Scalar", "Vector", "Derived scalar", "Unit vector"],
+        ans: "Vector",
+        topic: "Vectors & Scalars"
+    },
+    
+    // --- 10 Questions for Newton’s Laws ---
+    {
+        q: "Newton's first law is also known as the law of:",
+        options: ["Momentum", "Inertia", "Action and Reaction", "Conservation of Energy"],
+        ans: "Inertia",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "Newton's second law states that F = :",
+        options: ["ma", "mg", "m * v", "1/2 m v^2"],
+        ans: "ma",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "For every action, there is an equal and opposite reaction. This is Newton's:",
+        options: ["First Law", "Second Law", "Third Law", "Law of Universal Gravitation"],
+        ans: "Third Law",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "A body of mass 10 kg is accelerated by a net force of 50 N. What is the acceleration?",
+        options: ["0.2 m/s²", "5 m/s²", "10 m/s²", "500 m/s²"],
+        ans: "5 m/s²",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "In the absence of a net force, an object will maintain a constant velocity.",
+        options: ["True", "False"],
+        ans: "True",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "The force of gravity acting on an object is called its:",
+        options: ["Mass", "Momentum", "Inertia", "Weight"],
+        ans: "Weight",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "Friction is an example of an ________ force.",
+        options: ["Applied", "Internal", "Fictitious", "External"],
+        ans: "External",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "What is the SI unit of impulse?",
+        options: ["Newton (N)", "Newton-second (N·s)", "Joule (J)", "Watt (W)"],
+        ans: "Newton-second (N·s)",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "The resistance of an object to a change in its state of motion is called:",
+        options: ["Momentum", "Weight", "Inertia", "Force"],
+        ans: "Inertia",
+        topic: "Newton’s Laws"
+    },
+    {
+        q: "The momentum of an object is defined as the product of its mass and:",
+        options: ["Acceleration", "Force", "Velocity", "Energy"],
+        ans: "Velocity",
+        topic: "Newton’s Laws"
+    },
+    
+    // --- 10 Questions for Kinematics ---
+    {
+        q: "The rate of change of displacement is:",
+        options: ["Speed", "Acceleration", "Velocity", "Distance"],
+        ans: "Velocity",
+        topic: "Kinematics"
+    },
+    {
+        q: "A car accelerates from rest at 2 m/s^2. What is its speed after 5 seconds?",
+        options: ["5 m/s", "10 m/s", "25 m/s", "50 m/s"],
+        ans: "10 m/s",
+        topic: "Kinematics"
+    },
+    {
+        q: "Which of the following is an equation of motion with constant acceleration?",
+        options: ["v = u + at^2", "v = u + at", "v = 1/2at^2", "v^2 = u^2 + at"],
+        ans: "v = u + at",
+        topic: "Kinematics"
+    },
+    {
+        q: "An object thrown vertically upwards has zero velocity at its:",
+        options: ["Starting point", "Mid-point", "Highest point", "Return point"],
+        ans: "Highest point",
+        topic: "Kinematics"
+    },
+    {
+        q: "The slope of a displacement-time graph represents:",
+        options: ["Acceleration", "Force", "Velocity", "Distance"],
+        ans: "Velocity",
+        topic: "Kinematics"
+    },
+    {
+        q: "What is the displacement of an object that moves 5m east and then 5m west?",
+        options: ["10 m", "5 m", "0 m", "25 m"],
+        ans: "0 m",
+        topic: "Kinematics"
+    },
+    {
+        q: "Free fall is motion under the influence of only:",
+        options: ["Air resistance", "Gravity", "Applied force", "Tension"],
+        ans: "Gravity",
+        topic: "Kinematics"
+    },
+    {
+        q: "A projectile's horizontal velocity is constant assuming no air resistance.",
+        options: ["True", "False"],
+        ans: "True",
+        topic: "Kinematics"
+    },
+    {
+        q: "The acceleration of a body moving at constant velocity is:",
+        options: ["Constant", "Zero", "Increasing", "Negative"],
+        ans: "Zero",
+        topic: "Kinematics"
+    },
+    {
+        q: "If the velocity of an object is uniform, its speed is:",
+        options: ["Changing", "Zero", "Increasing", "Constant"],
+        ans: "Constant",
+        topic: "Kinematics"
+    }
+    
+    // ... Kinematics, Work, Energy, Power, and Thermodynamics need 10 questions each...
+],
+
+"CHM101": [
+   
+    /* ================= ATOMIC STRUCTURE (15) ================= */
+    {
+    q: "The smallest unit of an element that retains its properties is:",
+    options: ["Atom", "Molecule", "Ion", "Compound"],
+    ans: "Atom",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "The nucleus of an atom contains:",
+    options: ["Electrons only", "Protons only", "Neutrons only", "Protons and neutrons"],
+    ans: "Protons and neutrons",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Electrons are found in the:",
+    options: ["Nucleus", "Orbitals", "Protons", "Neutrons"],
+    ans: "Orbitals",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "The atomic number represents the number of:",
+    options: ["Neutrons", "Electrons", "Protons", "Nucleons"],
+    ans: "Protons",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Isotopes of an element have the same:",
+    options: ["Mass number", "Atomic number", "Number of neutrons", "Mass"],
+    ans: "Atomic number",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Which particle has a negative charge?",
+    options: ["Proton", "Electron", "Neutron", "Nucleus"],
+    ans: "Electron",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "The mass number is the sum of:",
+    options: ["Protons and electrons", "Neutrons only", "Protons and neutrons", "Electrons only"],
+    ans: "Protons and neutrons",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Which model introduced electron shells?",
+    options: ["Dalton", "Rutherford", "Bohr", "Thomson"],
+    ans: "Bohr",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Neutrons have:",
+    options: ["Positive charge", "Negative charge", "No charge", "Variable charge"],
+    ans: "No charge",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "The relative mass of an electron is approximately:",
+    options: ["1", "1/1836", "1/12", "0"],
+    ans: "1/1836",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Which particle determines chemical properties?",
+    options: ["Neutrons", "Protons", "Electrons", "Nucleus"],
+    ans: "Electrons",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "An atom is electrically neutral because:",
+    options: ["Protons = electrons", "Neutrons = electrons", "Protons = neutrons", "Electrons = neutrons"],
+    ans: "Protons = electrons",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "The maximum number of electrons in the first shell is:",
+    options: ["2", "8", "18", "32"],
+    ans: "2",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Which shell is closest to the nucleus?",
+    options: ["L", "M", "N", "K"],
+    ans: "K",
+    topic: "Atomic Structure"
+    },
+    {
+    q: "Atomic structure explains:",
+    options: ["Bonding", "Reactivity", "Spectra", "All"],
+    ans: "All",
+    topic: "Atomic Structure"
+    },
+    
+    /* ================= CHEMICAL BONDING (15) ================= */
+    {
+    q: "A chemical bond is formed by:",
+    options: ["Neutrons", "Electrons", "Protons", "Nucleus"],
+    ans: "Electrons",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Ionic bonding involves:",
+    options: ["Sharing electrons", "Transfer of electrons", "Sharing protons", "Transfer of neutrons"],
+    ans: "Transfer of electrons",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Covalent bonding involves:",
+    options: ["Electron transfer", "Electron sharing", "Ion formation", "Metal ions"],
+    ans: "Electron sharing",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Which bond exists in NaCl?",
+    options: ["Covalent", "Ionic", "Metallic", "Hydrogen"],
+    ans: "Ionic",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "A bond formed between metals is called:",
+    options: ["Covalent", "Ionic", "Metallic", "Hydrogen"],
+    ans: "Metallic",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Hydrogen bonding occurs in:",
+    options: ["NaCl", "H2O", "CO2", "O2"],
+    ans: "H2O",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Which compound has covalent bonds?",
+    options: ["NaCl", "MgO", "HCl", "KBr"],
+    ans: "HCl",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Electrovalent bond is another name for:",
+    options: ["Covalent bond", "Ionic bond", "Metallic bond", "Hydrogen bond"],
+    ans: "Ionic bond",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Bond length refers to:",
+    options: ["Distance between nuclei", "Bond energy", "Bond angle", "Electron cloud"],
+    ans: "Distance between nuclei",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Which bond is strongest?",
+    options: ["Hydrogen", "Ionic", "Covalent", "Metallic"],
+    ans: "Covalent",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Valence electrons are found in:",
+    options: ["Inner shell", "Middle shell", "Outer shell", "Nucleus"],
+    ans: "Outer shell",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "A molecule formed by electron sharing is:",
+    options: ["Ionic", "Covalent", "Metallic", "None"],
+    ans: "Covalent",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Which element forms metallic bonds?",
+    options: ["Oxygen", "Sodium", "Chlorine", "Nitrogen"],
+    ans: "Sodium",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Bond energy is the energy required to:",
+    options: ["Form bond", "Break bond", "Transfer electrons", "Share protons"],
+    ans: "Break bond",
+    topic: "Chemical Bonding"
+    },
+    {
+    q: "Chemical bonding explains:",
+    options: ["Stability of atoms", "Reactivity", "Structure of compounds", "All"],
+    ans: "All",
+    topic: "Chemical Bonding"
+    },
+    
+    /* ================= STOICHIOMETRY (15) ================= */
+    {
+    q: "Stoichiometry deals with:",
+    options: ["Energy changes", "Reaction quantities", "Atomic structure", "Bonding"],
+    ans: "Reaction quantities",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "The mole is a unit for:",
+    options: ["Mass", "Volume", "Amount of substance", "Density"],
+    ans: "Amount of substance",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "One mole contains:",
+    options: ["6.02 × 10²² particles", "6.02 × 10²³ particles", "6.02 × 10²¹ particles", "6.02 × 10²⁰ particles"],
+    ans: "6.02 × 10²³ particles",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Molar mass is expressed in:",
+    options: ["g", "g/mol", "kg", "mol"],
+    ans: "g/mol",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Which law supports stoichiometry?",
+    options: ["Boyle’s law", "Law of conservation of mass", "Charles law", "Avogadro’s law"],
+    ans: "Law of conservation of mass",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "The empirical formula shows:",
+    options: ["Actual number of atoms", "Simplest ratio", "Total mass", "Structure"],
+    ans: "Simplest ratio",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "The molecular formula shows:",
+    options: ["Simplest ratio", "Actual number of atoms", "Mass only", "Ions only"],
+    ans: "Actual number of atoms",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Limiting reagent determines:",
+    options: ["Rate", "Yield", "Energy", "Temperature"],
+    ans: "Yield",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Percentage yield is calculated as:",
+    options: ["Actual/Theoretical × 100", "Theoretical/Actual × 100", "Actual + theoretical", "Difference"],
+    ans: "Actual/Theoretical × 100",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Balanced chemical equations obey:",
+    options: ["Mass conservation", "Energy loss", "Volume change", "Temperature rise"],
+    ans: "Mass conservation",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Which is required to balance equations?",
+    options: ["Mass", "Atoms", "Volume", "Energy"],
+    ans: "Atoms",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Moles can be calculated using:",
+    options: ["Mass/molar mass", "Volume × density", "Mass × volume", "Energy"],
+    ans: "Mass/molar mass",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Which unit measures amount of substance?",
+    options: ["Gram", "Mole", "Liter", "Kilogram"],
+    ans: "Mole",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Stoichiometry calculations are based on:",
+    options: ["Balanced equations", "Unbalanced equations", "Assumptions", "Guessing"],
+    ans: "Balanced equations",
+    topic: "Stoichiometry"
+    },
+    {
+    q: "Avogadro’s number relates mole to:",
+    options: ["Mass", "Particles", "Volume", "Energy"],
+    ans: "Particles",
+    topic: "Stoichiometry"
+    },
+    
+    /* ================= ACIDS AND BASES (15) ================= */
+    {
+    q: "According to Arrhenius, an acid is a substance that:",
+    options: ["Accepts protons", "Donates protons", "Produces H⁺ in water", "Produces OH⁻"],
+    ans: "Produces H⁺ in water",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "According to Arrhenius, a base produces:",
+    options: ["H⁺", "OH⁻", "Electrons", "Protons"],
+    ans: "OH⁻",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "Brønsted–Lowry acid is a:",
+    options: ["Proton donor", "Proton acceptor", "Electron donor", "Electron acceptor"],
+    ans: "Proton donor",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "Brønsted–Lowry base is a:",
+    options: ["Proton donor", "Electron acceptor", "Proton acceptor", "Hydrogen producer"],
+    ans: "Proton acceptor",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "Lewis acid is a substance that:",
+    options: ["Donates electrons", "Accepts electrons", "Produces H⁺", "Produces OH⁻"],
+    ans: "Accepts electrons",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "Lewis base is a substance that:",
+    options: ["Accepts electrons", "Donates electrons", "Produces H⁺", "Produces salt"],
+    ans: "Donates electrons",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "pH is a measure of:",
+    options: ["Basicity", "Acidity", "Temperature", "Pressure"],
+    ans: "Acidity",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "pH is calculated using:",
+    options: ["−log[H⁺]", "log[H⁺]", "1/[H⁺]", "H⁺ × log"],
+    ans: "−log[H⁺]",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "If [H⁺] = 1 × 10⁻³ mol/dm³, pH is:",
+    options: ["3", "7", "10", "11"],
+    ans: "3",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "A solution with pH 7 is:",
+    options: ["Acidic", "Basic", "Neutral", "Strong acid"],
+    ans: "Neutral",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "If pH < 7, the solution is:",
+    options: ["Neutral", "Basic", "Acidic", "Salt"],
+    ans: "Acidic",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "If [H⁺] = 1 × 10⁻⁵, pH equals:",
+    options: ["5", "7", "9", "10"],
+    ans: "5",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "Which is a strong acid?",
+    options: ["CH₃COOH", "HCl", "NH₄OH", "H₂O"],
+    ans: "HCl",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "Which is a strong base?",
+    options: ["NaOH", "NH₃", "H₂CO₃", "CH₃COOH"],
+    ans: "NaOH",
+    topic: "Acids and Bases"
+    },
+    {
+    q: "As pH increases, acidity:",
+    options: ["Increases", "Decreases", "Remains same", "Becomes neutral"],
+    ans: "Decreases",
+    topic: "Acids and Bases"
+    },
+    
+    /* ================= REACTION KINETICS (15) ================= */
+    {
+    q: "Reaction kinetics studies:",
+    options: ["Reaction energy", "Reaction rate", "Equilibrium", "Bonding"],
+    ans: "Reaction rate",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Rate of reaction depends on:",
+    options: ["Temperature", "Concentration", "Catalyst", "All"],
+    ans: "All",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Increasing temperature generally:",
+    options: ["Slows reaction", "Stops reaction", "Increases reaction rate", "Has no effect"],
+    ans: "Increases reaction rate",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "A catalyst works by:",
+    options: ["Increasing activation energy", "Lowering activation energy", "Stopping reaction", "Changing products"],
+    ans: "Lowering activation energy",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Activation energy is:",
+    options: ["Total energy", "Minimum energy for reaction", "Bond energy", "Heat energy"],
+    ans: "Minimum energy for reaction",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Increasing concentration increases:",
+    options: ["Collision frequency", "Mass", "Volume", "Energy loss"],
+    ans: "Collision frequency",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Rate of reaction is measured as:",
+    options: ["Change in concentration/time", "Mass/time", "Energy/time", "Volume/time"],
+    ans: "Change in concentration/time",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Which factor does NOT affect reaction rate?",
+    options: ["Temperature", "Pressure", "Catalyst", "Color"],
+    ans: "Color",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Fast reactions have:",
+    options: ["High activation energy", "Low activation energy", "No energy", "Zero collisions"],
+    ans: "Low activation energy",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Collision theory states that reactions occur when particles:",
+    options: ["Collide effectively", "Touch lightly", "Mix randomly", "Stay apart"],
+    ans: "Collide effectively",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Pressure affects reactions involving:",
+    options: ["Solids", "Liquids", "Gases", "All"],
+    ans: "Gases",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "A catalyst remains:",
+    options: ["Consumed", "Changed", "Unchanged", "Destroyed"],
+    ans: "Unchanged",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Which reaction is fastest?",
+    options: ["High temperature", "Low temperature", "Low concentration", "No catalyst"],
+    ans: "High temperature",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Reaction rate increases with:",
+    options: ["Lower temperature", "Lower surface area", "Higher surface area", "Lower pressure"],
+    ans: "Higher surface area",
+    topic: "Reaction Kinetics"
+    },
+    {
+    q: "Kinetics helps predict:",
+    options: ["Speed of reaction", "Products", "Bond type", "Atomic number"],
+    ans: "Speed of reaction",
+    topic: "Reaction Kinetics"
+    },
+    
+    
+    
+    // --- 10 Questions for Atomic Structure ---
+    {
+        q: "The particle responsible for the unique identity of an element is the:",
+        options: ["Electron", "Neutron", "Proton", "Ion"],
+        ans: "Proton",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "The mass number of an atom is the sum of:",
+        options: ["Protons and Electrons", "Neutrons and Electrons", "Protons and Neutrons", "Valence Electrons"],
+        ans: "Protons and Neutrons",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "Isotopes are atoms of the same element with a different number of:",
+        options: ["Protons", "Electrons", "Neutrons", "Shells"],
+        ans: "Neutrons",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "The region around the nucleus where electrons are most likely to be found is called the:",
+        options: ["Orbital", "Shell", "Subshell", "Nucleon"],
+        ans: "Orbital",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "The maximum number of electrons that can occupy the third energy shell (n=3) is:",
+        options: ["2", "8", "18", "32"],
+        ans: "18",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "Who proposed the 'plum pudding' model of the atom?",
+        options: ["Ernest Rutherford", "Niels Bohr", "J.J. Thomson", "John Dalton"],
+        ans: "J.J. Thomson",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "The atomic number is equal to the number of:",
+        options: ["Neutrons", "Protons", "Nucleons", "Valence electrons"],
+        ans: "Protons",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "Rutherford's gold foil experiment led to the discovery of the:",
+        options: ["Electron", "Proton", "Neutron", "Atomic nucleus"],
+        ans: "Atomic nucleus",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "The Pauli Exclusion Principle states that no two electrons in an atom can have the same set of:",
+        options: ["Valence electrons", "Orbital types", "Quantum numbers", "Spin values"],
+        ans: "Quantum numbers",
+        topic: "Atomic Structure"
+    },
+    {
+        q: "An ion with a positive charge is called a:",
+        options: ["Anion", "Isotope", "Cation", "Molecule"],
+        ans: "Cation",
+        topic: "Atomic Structure"
+    },
+
+    // --- 10 Questions for Chemical Bonding ---
+    {
+        q: "The force of attraction between oppositely charged ions is a(n):",
+        options: ["Covalent bond", "Hydrogen bond", "Metallic bond", "Ionic bond"],
+        ans: "Ionic bond",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "A bond formed by the sharing of electron pairs between atoms is a:",
+        options: ["Ionic bond", "Covalent bond", "Dative bond", "Van der Waals force"],
+        ans: "Covalent bond",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "The tendency of atoms to achieve 8 electrons in their outermost shell is called the:",
+        options: ["Octet rule", "Pauli principle", "Hund's rule", "Aufbau principle"],
+        ans: "Octet rule",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "Which molecule exhibits a triple bond?",
+        options: ["O_2", "H_2O", "N_2", "CO_2"],
+        ans: "N_2",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "The VSEPR theory is used to predict the _______ of molecules.",
+        options: ["Polarity", "Mass", "Geometry", "Reactivity"],
+        ans: "Geometry",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "The compound formed between a metal and a non-metal is usually:",
+        options: ["Metallic", "Covalent", "Ionic", "Dative"],
+        ans: "Ionic",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "Which type of bond involves a free-moving 'sea' of electrons?",
+        options: ["Ionic", "Covalent", "Metallic", "Hydrogen"],
+        ans: "Metallic",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "In a polar covalent bond, electrons are shared:",
+        options: ["Equally", "Unequally", "Completely", "Not at all"],
+        ans: "Unequally",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "The electron affinity is a measure of an atom's tendency to:",
+        options: ["Lose an electron", "Gain an electron", "Share electrons", "Attract a proton"],
+        ans: "Gain an electron",
+        topic: "Chemical Bonding"
+    },
+    {
+        q: "The geometry of the water molecule (H_2O) is:",
+        options: ["Linear", "Trigonal planar", "Tetrahedral", "Bent"],
+        ans: "Bent",
+        topic: "Chemical Bonding"
+    },
+    
+    // ... Stoichiometry, Acids and Bases, and Reaction Kinetics need 10 questions each...
+],
+
+// --- Sample structure for other subjects ---
+"COS101": [
+   
+    
+    /* ============ COMPUTER BASICS (15) ============ */
+    {
+    q: "A computer is best described as a machine that:",
+    options: ["Thinks like humans", "Processes data into information", "Stores electricity", "Controls humans"],
+    ans: "Processes data into information",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Data refers to:",
+    options: ["Processed facts", "Raw facts", "Information", "Results"],
+    ans: "Raw facts",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Information is:",
+    options: ["Unprocessed data", "Raw numbers", "Processed data", "Random facts"],
+    ans: "Processed data",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Which of the following is NOT a characteristic of a computer?",
+    options: ["Speed", "Accuracy", "Intelligence", "Storage"],
+    ans: "Intelligence",
+    topic: "Computer Basics"
+    },
+    {
+    q: "The main advantage of computers is their ability to:",
+    options: ["Think", "Make decisions", "Process data quickly", "Sleep"],
+    ans: "Process data quickly",
+    topic: "Computer Basics"
+    },
+    {
+    q: "IPO in computing stands for:",
+    options: ["Input–Process–Output", "Input–Program–Output", "Internal–Process–Output", "Input–Power–Output"],
+    ans: "Input–Process–Output",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Which device is used to input data?",
+    options: ["Monitor", "Keyboard", "Printer", "Speaker"],
+    ans: "Keyboard",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Which device displays output?",
+    options: ["Keyboard", "Mouse", "Monitor", "Scanner"],
+    ans: "Monitor",
+    topic: "Computer Basics"
+    },
+    {
+    q: "The brain of the computer is the:",
+    options: ["RAM", "Hard disk", "CPU", "Monitor"],
+    ans: "CPU",
+    topic: "Computer Basics"
+    },
+    {
+    q: "A computer without software is:",
+    options: ["Fast", "Useless", "Accurate", "Automatic"],
+    ans: "Useless",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Computers operate based on:",
+    options: ["Electricity", "Human intelligence", "Instructions", "Guessing"],
+    ans: "Instructions",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Which of the following is an output device?",
+    options: ["Scanner", "Keyboard", "Printer", "Mouse"],
+    ans: "Printer",
+    topic: "Computer Basics"
+    },
+    {
+    q: "A laptop is an example of:",
+    options: ["Supercomputer", "Mainframe", "Microcomputer", "Minicomputer"],
+    ans: "Microcomputer",
+    topic: "Computer Basics"
+    },
+    {
+    q: "The physical parts of a computer are called:",
+    options: ["Software", "Programs", "Hardware", "Data"],
+    ans: "Hardware",
+    topic: "Computer Basics"
+    },
+    {
+    q: "Computer speed is measured in:",
+    options: ["Watts", "Hertz", "Bytes", "Pixels"],
+    ans: "Hertz",
+    topic: "Computer Basics"
+    },
+    
+    /* ============ COMPUTER HARDWARE (15) ============ */
+    {
+    q: "Hardware refers to:",
+    options: ["Programs", "Physical components", "Data", "Instructions"],
+    ans: "Physical components",
+    topic: "Hardware"
+    },
+    {
+    q: "Which is NOT hardware?",
+    options: ["Keyboard", "Monitor", "Mouse", "Operating system"],
+    ans: "Operating system",
+    topic: "Hardware"
+    },
+    {
+    q: "The CPU consists of:",
+    options: ["RAM and ROM", "ALU and Control Unit", "Hard disk and RAM", "Monitor and keyboard"],
+    ans: "ALU and Control Unit",
+    topic: "Hardware"
+    },
+    {
+    q: "ALU stands for:",
+    options: ["Automatic Logic Unit", "Arithmetic Logic Unit", "Advanced Logic Unit", "Array Logic Unit"],
+    ans: "Arithmetic Logic Unit",
+    topic: "Hardware"
+    },
+    {
+    q: "Which component stores data temporarily?",
+    options: ["Hard disk", "ROM", "RAM", "Flash drive"],
+    ans: "RAM",
+    topic: "Hardware"
+    },
+    {
+    q: "ROM is mainly used to store:",
+    options: ["User data", "Temporary files", "Startup instructions", "Movies"],
+    ans: "Startup instructions",
+    topic: "Hardware"
+    },
+    {
+    q: "Which is a secondary storage device?",
+    options: ["RAM", "CPU", "Hard disk", "Cache"],
+    ans: "Hard disk",
+    topic: "Hardware"
+    },
+    {
+    q: "A mouse is an example of:",
+    options: ["Output device", "Input device", "Storage device", "Processing device"],
+    ans: "Input device",
+    topic: "Hardware"
+    },
+    {
+    q: "Which device is used to scan documents?",
+    options: ["Printer", "Scanner", "Monitor", "Speaker"],
+    ans: "Scanner",
+    topic: "Hardware"
+    },
+    {
+    q: "The control unit does the following EXCEPT:",
+    options: ["Direct operations", "Interpret instructions", "Perform calculations", "Coordinate activities"],
+    ans: "Perform calculations",
+    topic: "Hardware"
+    },
+    {
+    q: "Which device produces sound?",
+    options: ["Speaker", "Keyboard", "Scanner", "Mouse"],
+    ans: "Speaker",
+    topic: "Hardware"
+    },
+    {
+    q: "The main memory of a computer is:",
+    options: ["ROM", "Hard disk", "RAM", "Flash"],
+    ans: "RAM",
+    topic: "Hardware"
+    },
+    {
+    q: "Which of these is NOT an input device?",
+    options: ["Mouse", "Scanner", "Monitor", "Keyboard"],
+    ans: "Monitor",
+    topic: "Hardware"
+    },
+    {
+    q: "CPU speed is measured in:",
+    options: ["Bytes", "Hertz", "Volts", "Inches"],
+    ans: "Hertz",
+    topic: "Hardware"
+    },
+    {
+    q: "Which stores data permanently?",
+    options: ["RAM", "Cache", "Hard disk", "Registers"],
+    ans: "Hard disk",
+    topic: "Hardware"
+    },
+    
+    /* ============ COMPUTER SOFTWARE (15) ============ */
+    {
+    q: "Software refers to:",
+    options: ["Physical devices", "Programs and instructions", "Electric current", "Hardware parts"],
+    ans: "Programs and instructions",
+    topic: "Software"
+    },
+    {
+    q: "Which is system software?",
+    options: ["MS Word", "Excel", "Windows", "Chrome"],
+    ans: "Windows",
+    topic: "Software"
+    },
+    {
+    q: "Application software is used to:",
+    options: ["Control hardware", "Solve user problems", "Start computer", "Manage memory"],
+    ans: "Solve user problems",
+    topic: "Software"
+    },
+    {
+    q: "Which of the following is application software?",
+    options: ["Linux", "Windows", "MS Excel", "BIOS"],
+    ans: "MS Excel",
+    topic: "Software"
+    },
+    {
+    q: "Operating system functions include:",
+    options: ["Memory management", "Process control", "File management", "All"],
+    ans: "All",
+    topic: "Software"
+    },
+    {
+    q: "BIOS is stored in:",
+    options: ["RAM", "ROM", "Hard disk", "Cache"],
+    ans: "ROM",
+    topic: "Software"
+    },
+    {
+    q: "Which software manages computer resources?",
+    options: ["Application", "System software", "Utility", "Compiler"],
+    ans: "System software",
+    topic: "Software"
+    },
+    {
+    q: "A compiler is used to:",
+    options: ["Translate high-level language", "Store data", "Manage hardware", "Display output"],
+    ans: "Translate high-level language",
+    topic: "Software"
+    },
+    {
+    q: "Utility software is used for:",
+    options: ["Games", "Maintenance", "Writing letters", "Browsing"],
+    ans: "Maintenance",
+    topic: "Software"
+    },
+    {
+    q: "Which is NOT a programming language?",
+    options: ["Python", "Java", "HTML", "Keyboard"],
+    ans: "Keyboard",
+    topic: "Software"
+    },
+    {
+    q: "MS Word is used for:",
+    options: ["Calculations", "Word processing", "Presentations", "Databases"],
+    ans: "Word processing",
+    topic: "Software"
+    },
+    {
+    q: "Software piracy refers to:",
+    options: ["Software development", "Illegal copying of software", "Software testing", "Installation"],
+    ans: "Illegal copying of software",
+    topic: "Software"
+    },
+    {
+    q: "Which software is used for spreadsheets?",
+    options: ["Word", "PowerPoint", "Excel", "Access"],
+    ans: "Excel",
+    topic: "Software"
+    },
+    {
+    q: "System software starts when:",
+    options: ["User clicks mouse", "Computer boots", "Application opens", "Internet connects"],
+    ans: "Computer boots",
+    topic: "Software"
+    },
+    {
+    q: "The OS acts as an interface between:",
+    options: ["User and hardware", "Hardware and power", "Software and data", "Memory and CPU"],
+    ans: "User and hardware",
+    topic: "Software"
+    },
+    
+   
+    {
+        q: "The process of breaking down a problem into smaller, manageable subproblems is called:",
+        options: ["Abstraction", "Recursion", "Decomposition", "Encapsulation"],
+        ans: "Decomposition",
+        topic: "Introduction to Algorithms"
+    },
+    {
+        q: "Which data structure operates on the principle of LIFO (Last-In, First-Out)?",
+        options: ["Queue", "Stack", "Array", "Linked List"],
+        ans: "Stack",
+        topic: "Data Structures"
+    }
+    // ... (Add 10 questions per COS101 topic) ...
+],
+"STA111": [
+    
+    
+    /* ============ BASIC STATISTICS (15) ============ */
+    {
+    q: "Statistics is the science of:",
+    options: ["Numbers", "Data collection and analysis", "Mathematics", "Calculations"],
+    ans: "Data collection and analysis",
+    topic: "Basics"
+    },
+    {
+    q: "Data refers to:",
+    options: ["Processed facts", "Raw facts", "Information", "Results"],
+    ans: "Raw facts",
+    topic: "Basics"
+    },
+    {
+    q: "Statistics is divided into:",
+    options: ["Two branches", "Three branches", "Four branches", "One branch"],
+    ans: "Two branches",
+    topic: "Basics"
+    },
+    {
+    q: "The two branches of statistics are:",
+    options: ["Math and science", "Descriptive and inferential", "Algebra and geometry", "Theory and practical"],
+    ans: "Descriptive and inferential",
+    topic: "Basics"
+    },
+    {
+    q: "Descriptive statistics deals with:",
+    options: ["Predictions", "Data summary", "Hypothesis testing", "Probability"],
+    ans: "Data summary",
+    topic: "Basics"
+    },
+    {
+    q: "Inferential statistics deals with:",
+    options: ["Data collection", "Data organization", "Drawing conclusions", "Tables"],
+    ans: "Drawing conclusions",
+    topic: "Basics"
+    },
+    {
+    q: "Population refers to:",
+    options: ["Entire data set", "Part of data", "Sample", "Survey"],
+    ans: "Entire data set",
+    topic: "Basics"
+    },
+    {
+    q: "A sample is:",
+    options: ["Entire population", "Part of population", "Census", "Complete data"],
+    ans: "Part of population",
+    topic: "Basics"
+    },
+    {
+    q: "Census involves:",
+    options: ["Part of population", "Entire population", "Guessing", "Sampling"],
+    ans: "Entire population",
+    topic: "Basics"
+    },
+    {
+    q: "A parameter is used for:",
+    options: ["Sample", "Population", "Tables", "Graphs"],
+    ans: "Population",
+    topic: "Basics"
+    },
+    {
+    q: "A statistic is used for:",
+    options: ["Population", "Sample", "Census", "Theory"],
+    ans: "Sample",
+    topic: "Basics"
+    },
+    {
+    q: "Which is qualitative data?",
+    options: ["Height", "Weight", "Gender", "Age"],
+    ans: "Gender",
+    topic: "Basics"
+    },
+    {
+    q: "Which is quantitative data?",
+    options: ["Color", "Religion", "Height", "Marital status"],
+    ans: "Height",
+    topic: "Basics"
+    },
+    {
+    q: "Primary data is collected from:",
+    options: ["Books", "Internet", "Original source", "Journals"],
+    ans: "Original source",
+    topic: "Basics"
+    },
+    {
+    q: "Secondary data is obtained from:",
+    options: ["Experiments", "Original source", "Published materials", "Field work"],
+    ans: "Published materials",
+    topic: "Basics"
+    },
+    
+    /* ============ MEASURES OF CENTRAL TENDENCY (15) ============ */
+    {
+    q: "Mean is calculated as:",
+    options: ["Sum / frequency", "Sum / number of observations", "Middle value", "Most frequent"],
+    ans: "Sum / number of observations",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Median is the:",
+    options: ["Average", "Most frequent value", "Middle value", "Total"],
+    ans: "Middle value",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Mode is the:",
+    options: ["Middle value", "Average", "Most frequent value", "Least value"],
+    ans: "Most frequent value",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Which measure is affected by extreme values?",
+    options: ["Median", "Mode", "Mean", "Range"],
+    ans: "Mean",
+    topic: "Central Tendency"
+    },
+    {
+    q: "The mean of 2, 4, 6 is:",
+    options: ["3", "4", "6", "12"],
+    ans: "4",
+    topic: "Central Tendency"
+    },
+    {
+    q: "The median of 3, 5, 7 is:",
+    options: ["3", "5", "7", "15"],
+    ans: "5",
+    topic: "Central Tendency"
+    },
+    {
+    q: "The mode of 2, 4, 4, 6 is:",
+    options: ["2", "4", "6", "None"],
+    ans: "4",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Which data set has no mode?",
+    options: ["1,1,2", "2,2,3", "1,2,3", "3,3,4"],
+    ans: "1,2,3",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Mean is also called:",
+    options: ["Median", "Average", "Mode", "Range"],
+    ans: "Average",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Which measure divides data into two equal parts?",
+    options: ["Mean", "Mode", "Median", "Range"],
+    ans: "Median",
+    topic: "Central Tendency"
+    },
+    {
+    q: "For skewed data, the best measure is:",
+    options: ["Mean", "Median", "Mode", "Range"],
+    ans: "Median",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Mode is useful for:",
+    options: ["Qualitative data", "Quantitative data", "Interval data", "Ratio data"],
+    ans: "Qualitative data",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Mean requires:",
+    options: ["Ordered data", "Calculation", "Frequency only", "Guessing"],
+    ans: "Calculation",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Median is affected by extreme values?",
+    options: ["Yes", "No", "Sometimes", "Always"],
+    ans: "No",
+    topic: "Central Tendency"
+    },
+    {
+    q: "Mode can have:",
+    options: ["One value only", "Two values", "More than one value", "None only"],
+    ans: "More than one value",
+    topic: "Central Tendency"
+    },
+    
+    
+    {
+        q: "The middle value in an ordered set of data is called the:",
+        options: ["Mean", "Mode", "Median", "Range"],
+        ans: "Median",
+        topic: "Measures of Central Tendency"
+    }
+    ],
+"STA121": [
+    
+    /* ============ POPULATION AND SAMPLE (15) ============ */
+    {
+    q: "In statistics, a population refers to:",
+    options: ["A sample", "A subset of data", "The entire group under study", "A random selection"],
+    ans: "The entire group under study",
+    topic: "Population and sample"
+    },
+    {
+    q: "A sample is defined as:",
+    options: ["The whole population", "A part of the population", "A census", "A parameter"],
+    ans: "A part of the population",
+    topic: "Population and sample"
+    },
+    {
+    q: "A census involves:",
+    options: ["Part of the population", "Random sampling", "The entire population", "Estimation"],
+    ans: "The entire population",
+    topic: "Population and sample"
+    },
+    {
+    q: "Which of the following is an advantage of sampling?",
+    options: ["More expensive", "Time-consuming", "Less cost", "More errors"],
+    ans: "Less cost",
+    topic: "Population and sample"
+    },
+    {
+    q: "A parameter is a numerical value that describes a:",
+    options: ["Sample", "Population", "Table", "Graph"],
+    ans: "Population",
+    topic: "Population and sample"
+    },
+    {
+    q: "A statistic is a numerical value that describes a:",
+    options: ["Population", "Sample", "Census", "Frame"],
+    ans: "Sample",
+    topic: "Population and sample"
+    },
+    {
+    q: "Which of the following is a sampling method?",
+    options: ["Census", "Observation", "Random sampling", "Interview"],
+    ans: "Random sampling",
+    topic: "Population and sample"
+    },
+    {
+    q: "Simple random sampling ensures that:",
+    options: ["Some elements are favored", "All elements have equal chance", "Only large samples are chosen", "Only small samples are chosen"],
+    ans: "All elements have equal chance",
+    topic: "Population and sample"
+    },
+    {
+    q: "A sampling frame is:",
+    options: ["A sample", "A list of population elements", "A table", "A statistic"],
+    ans: "A list of population elements",
+    topic: "Population and sample"
+    },
+    {
+    q: "Which sampling method divides the population into groups?",
+    options: ["Systematic", "Random", "Stratified", "Convenience"],
+    ans: "Stratified",
+    topic: "Population and sample"
+    },
+    {
+    q: "Bias in sampling occurs when:",
+    options: ["All members are included", "Some members have no chance of selection", "Sample is random", "Sample is large"],
+    ans: "Some members have no chance of selection",
+    topic: "Population and sample"
+    },
+    {
+    q: "Which of the following is NOT a sampling technique?",
+    options: ["Cluster sampling", "Stratified sampling", "Random sampling", "Census"],
+    ans: "Census",
+    topic: "Population and sample"
+    },
+    {
+    q: "The main goal of sampling is to:",
+    options: ["Increase cost", "Reduce accuracy", "Make inference about population", "Avoid data collection"],
+    ans: "Make inference about population",
+    topic: "Population and sample"
+    },
+    {
+    q: "A good sample should be:",
+    options: ["Biased", "Representative", "Very small", "Very large only"],
+    ans: "Representative",
+    topic: "Population and sample"
+    },
+    {
+    q: "Which sampling method selects every kth element?",
+    options: ["Random", "Stratified", "Systematic", "Cluster"],
+    ans: "Systematic",
+    topic: "Population and sample"
+    },
+    
+    /* ============ SAMPLE DISTRIBUTION AND PROPORTION (15) ============ */
+    {
+    q: "A sampling distribution refers to:",
+    options: ["Population distribution", "Distribution of sample statistics", "Raw data", "Grouped data"],
+    ans: "Distribution of sample statistics",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "The mean of the sampling distribution of the mean equals the:",
+    options: ["Sample mean", "Population mean", "Sample variance", "Standard error"],
+    ans: "Population mean",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "The standard deviation of a sampling distribution is called:",
+    options: ["Variance", "Error", "Standard error", "Mean deviation"],
+    ans: "Standard error",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "As sample size increases, the standard error:",
+    options: ["Increases", "Decreases", "Remains constant", "Becomes zero"],
+    ans: "Decreases",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "The Central Limit Theorem applies to:",
+    options: ["Small samples only", "Large samples only", "Sampling distribution of the mean", "Raw data"],
+    ans: "Sampling distribution of the mean",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "The sampling distribution of proportion is approximately normal when:",
+    options: ["n is small", "np and nq ≥ 5", "p = 0.5 only", "q = 0"],
+    ans: "np and nq ≥ 5",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "Sample proportion is denoted by:",
+    options: ["p", "q", "p̂", "μ"],
+    ans: "p̂",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "Population proportion is represented by:",
+    options: ["p", "p̂", "q̂", "x̄"],
+    ans: "p",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "Which factor affects the shape of sampling distribution?",
+    options: ["Sample size", "Population size only", "Type of data", "Units"],
+    ans: "Sample size",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "The variance of sample proportion is:",
+    options: ["pq/n", "p/n", "q/n", "n/pq"],
+    ans: "pq/n",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "Sampling error arises due to:",
+    options: ["Wrong calculation", "Use of sample instead of population", "Data entry error", "Measurement error"],
+    ans: "Use of sample instead of population",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "Which distribution is used for large sample proportions?",
+    options: ["Binomial", "Poisson", "Normal", "Uniform"],
+    ans: "Normal",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "As n → ∞, sampling distribution becomes:",
+    options: ["Skewed", "Uniform", "Normal", "Irregular"],
+    ans: "Normal",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "Sampling distribution is useful for:",
+    options: ["Data collection", "Inference", "Data entry", "Data storage"],
+    ans: "Inference",
+    topic: "Sample distribution and proportion"
+    },
+    {
+    q: "The mean of sampling distribution of proportion equals:",
+    options: ["q", "p̂", "p", "pq"],
+    ans: "p",
+    topic: "Sample distribution and proportion"
+    },
+    
+    /* ============ REGRESSION AND CORRELATION (15) ============ */
+    {
+    q: "Correlation measures the:",
+    options: ["Cause-effect relationship", "Strength of relationship", "Difference between variables", "Frequency"],
+    ans: "Strength of relationship",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Correlation coefficient ranges from:",
+    options: ["0 to 1", "-1 to 1", "1 to 10", "-∞ to +∞"],
+    ans: "-1 to 1",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "A correlation coefficient of 0 indicates:",
+    options: ["Perfect correlation", "Strong relationship", "No linear relationship", "Negative relationship"],
+    ans: "No linear relationship",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Positive correlation means:",
+    options: ["One increases, other decreases", "Both increase together", "No relationship", "Random movement"],
+    ans: "Both increase together",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Negative correlation means:",
+    options: ["Both increase", "One increases, other decreases", "No relationship", "Constant values"],
+    ans: "One increases, other decreases",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Regression analysis is used for:",
+    options: ["Prediction", "Classification", "Sorting", "Sampling"],
+    ans: "Prediction",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "The dependent variable is usually denoted by:",
+    options: ["x", "y", "r", "p"],
+    ans: "y",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "The independent variable is denoted by:",
+    options: ["x", "y", "r", "μ"],
+    ans: "x",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Correlation does not imply:",
+    options: ["Relationship", "Association", "Causation", "Dependence"],
+    ans: "Causation",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Perfect positive correlation has value:",
+    options: ["0", "-1", "1", "0.5"],
+    ans: "1",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Perfect negative correlation has value:",
+    options: ["0", "-1", "1", "-0.5"],
+    ans: "-1",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Scatter diagram is used to show:",
+    options: ["Frequency", "Distribution", "Relationship", "Variation"],
+    ans: "Relationship",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Regression line of y on x is used to predict:",
+    options: ["x", "y", "r", "μ"],
+    ans: "y",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "If r = 0.8, the relationship is:",
+    options: ["Weak", "Moderate", "Strong", "None"],
+    ans: "Strong",
+    topic: "Regression and correlation"
+    },
+    {
+    q: "Regression assumes relationship between variables is:",
+    options: ["Random", "Linear", "Curved", "None"],
+    ans: "Linear",
+    topic: "Regression and correlation"
+    },
+    
+    /* ============ PROBABILITY AND ELEMENTARY TIME ANALYSIS (15) ============ */
+    {
+    q: "Probability of an event ranges between:",
+    options: ["-1 and 1", "0 and 1", "1 and 2", "0 and ∞"],
+    ans: "0 and 1",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "The probability of a sure event is:",
+    options: ["0", "0.5", "1", "-1"],
+    ans: "1",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "The probability of an impossible event is:",
+    options: ["1", "0", "0.5", "-1"],
+    ans: "0",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Sample space is the set of:",
+    options: ["Events", "Outcomes", "Probabilities", "Experiments"],
+    ans: "Outcomes",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "An event is a:",
+    options: ["Subset of sample space", "Sample space", "Outcome", "Trial"],
+    ans: "Subset of sample space",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Probability of an event A is given by:",
+    options: ["n(S)/n(A)", "n(A)/n(S)", "n(A)n(S)", "n(S)-n(A)"],
+    ans: "n(A)/n(S)",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Two events are mutually exclusive if:",
+    options: ["They occur together", "They cannot occur together", "They are independent", "They are equal"],
+    ans: "They cannot occur together",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Independent events mean:",
+    options: ["One affects the other", "They depend on each other", "Occurrence of one does not affect the other", "They are mutually exclusive"],
+    ans: "Occurrence of one does not affect the other",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "P(A ∪ B) equals:",
+    options: ["P(A)+P(B)", "P(A)+P(B)-P(A∩B)", "P(A)P(B)", "P(A)/P(B)"],
+    ans: "P(A)+P(B)-P(A∩B)",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Elementary time series analysis deals with:",
+    options: ["Random data", "Data over time", "Grouped data", "Qualitative data"],
+    ans: "Data over time",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Time series data is arranged in:",
+    options: ["Rows", "Columns", "Chronological order", "Random order"],
+    ans: "Chronological order",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Trend shows the:",
+    options: ["Seasonal effect", "Long-term movement", "Random variation", "Cyclic effect"],
+    ans: "Long-term movement",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Seasonal variation occurs within:",
+    options: ["Many years", "One year", "Ten years", "Randomly"],
+    ans: "One year",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Cyclical variation occurs over:",
+    options: ["Short periods", "Irregular periods", "Long periods", "Daily periods"],
+    ans: "Long periods",
+    topic: "Probability and elementary time analysis"
+    },
+    {
+    q: "Random variation is caused by:",
+    options: ["Trend", "Season", "Unpredictable factors", "Cycles"],
+    ans: "Unpredictable factors",
+    topic: "Probability and elementary time analysis"
+    },
+    
+    /* ============ HYPOTHESIS TESTING (15) ============ */
+    {
+    q: "A hypothesis is a:",
+    options: ["Fact", "Assumption", "Testable statement", "Conclusion"],
+    ans: "Testable statement",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Null hypothesis is denoted by:",
+    options: ["H₁", "H₀", "H", "μ"],
+    ans: "H₀",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Alternative hypothesis is denoted by:",
+    options: ["H₀", "H₁", "μ", "σ"],
+    ans: "H₁",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Level of significance is commonly:",
+    options: ["0.5", "0.1", "0.05", "1"],
+    ans: "0.05",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Type I error occurs when:",
+    options: ["Accepting true H₀", "Rejecting true H₀", "Accepting false H₀", "Rejecting false H₀"],
+    ans: "Rejecting true H₀",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Type II error occurs when:",
+    options: ["Rejecting true H₀", "Accepting false H₀", "Rejecting false H₀", "Accepting true H₀"],
+    ans: "Accepting false H₀",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Critical region is the set of values for which:",
+    options: ["H₀ is accepted", "H₀ is rejected", "Test stops", "Mean is found"],
+    ans: "H₀ is rejected",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Test statistic is used to:",
+    options: ["Collect data", "Make decision", "Summarize data", "Draw graph"],
+    ans: "Make decision",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Z-test is used when:",
+    options: ["σ known", "σ unknown", "n small", "Data is qualitative"],
+    ans: "σ known",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "t-test is used when:",
+    options: ["σ known", "σ unknown", "n very large", "Population known"],
+    ans: "σ unknown",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "One-tailed test considers:",
+    options: ["One direction", "Two directions", "No direction", "Random direction"],
+    ans: "One direction",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Two-tailed test considers:",
+    options: ["One direction", "Two directions", "Positive only", "Negative only"],
+    ans: "Two directions",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Decision rule is based on:",
+    options: ["Sample size", "Critical value", "Mean", "Variance"],
+    ans: "Critical value",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "If test statistic falls in critical region:",
+    options: ["Accept H₀", "Reject H₀", "Do nothing", "Change data"],
+    ans: "Reject H₀",
+    topic: "Hypothesis Testing"
+    },
+    {
+    q: "Hypothesis testing helps in:",
+    options: ["Prediction", "Decision making", "Data entry", "Sampling"],
+    ans: "Decision making",
+    topic: "Hypothesis Testing"
+    }
+    
+   
+  
+    // ... (Add 10 questions per STA111/121 topic) ...
+],
+"BIO101":[
+    
+    /* ============ THE CELL (15) ============ */
+    {
+    q: "The cell is best described as the:",
+    options: ["Smallest atom of life", "Basic unit of life", "Smallest tissue", "Building block of organs"],
+    ans: "Basic unit of life",
+    topic: "The Cell"
+    },
+    {
+    q: "Who discovered the cell in 1665?",
+    options: ["Louis Pasteur", "Robert Hooke", "Charles Darwin", "Gregor Mendel"],
+    ans: "Robert Hooke",
+    topic: "The Cell"
+    },
+    {
+    q: "Which structure controls all activities of the cell?",
+    options: ["Ribosome", "Mitochondrion", "Nucleus", "Cytoplasm"],
+    ans: "Nucleus",
+    topic: "The Cell"
+    },
+    {
+    q: "The cell membrane is also known as:",
+    options: ["Cell wall", "Plasma membrane", "Nuclear membrane", "Cytoskeleton"],
+    ans: "Plasma membrane",
+    topic: "The Cell"
+    },
+    {
+    q: "Which organelle is responsible for energy production?",
+    options: ["Nucleus", "Mitochondrion", "Ribosome", "Golgi body"],
+    ans: "Mitochondrion",
+    topic: "The Cell"
+    },
+    {
+    q: "Ribosomes are involved in:",
+    options: ["Respiration", "Protein synthesis", "Photosynthesis", "Digestion"],
+    ans: "Protein synthesis",
+    topic: "The Cell"
+    },
+    {
+    q: "Plant cells differ from animal cells because plant cells have:",
+    options: ["Nucleus", "Mitochondria", "Cell wall", "Ribosomes"],
+    ans: "Cell wall",
+    topic: "The Cell"
+    },
+    {
+    q: "Which organelle contains chlorophyll?",
+    options: ["Chloroplast", "Mitochondrion", "Vacuole", "Nucleus"],
+    ans: "Chloroplast",
+    topic: "The Cell"
+    },
+    {
+    q: "Cytoplasm is best described as:",
+    options: ["Solid structure", "Jelly-like substance", "Rigid wall", "Fluid in nucleus"],
+    ans: "Jelly-like substance",
+    topic: "The Cell"
+    },
+    {
+    q: "The Golgi apparatus is involved in:",
+    options: ["Protein packaging", "Energy production", "Cell division", "Respiration"],
+    ans: "Protein packaging",
+    topic: "The Cell"
+    },
+    {
+    q: "Which structure stores materials in plant cells?",
+    options: ["Vacuole", "Nucleus", "Mitochondrion", "Ribosome"],
+    ans: "Vacuole",
+    topic: "The Cell"
+    },
+    {
+    q: "Prokaryotic cells lack:",
+    options: ["Cytoplasm", "Cell membrane", "True nucleus", "Ribosomes"],
+    ans: "True nucleus",
+    topic: "The Cell"
+    },
+    {
+    q: "Which of the following is a prokaryote?",
+    options: ["Amoeba", "Bacteria", "Paramecium", "Fungus"],
+    ans: "Bacteria",
+    topic: "The Cell"
+    },
+    {
+    q: "Cell division in body cells is called:",
+    options: ["Meiosis", "Binary fission", "Mitosis", "Fertilization"],
+    ans: "Mitosis",
+    topic: "The Cell"
+    },
+    {
+    q: "Which organelle is known as the powerhouse of the cell?",
+    options: ["Nucleus", "Chloroplast", "Mitochondrion", "Ribosome"],
+    ans: "Mitochondrion",
+    topic: "The Cell"
+    },
+    
+    /* ============ GENETICS (15) ============ */
+    {
+    q: "Genetics is the study of:",
+    options: ["Cells", "Heredity", "Evolution", "Ecology"],
+    ans: "Heredity",
+    topic: "Genetics"
+    },
+    {
+    q: "The father of genetics is:",
+    options: ["Darwin", "Mendel", "Pasteur", "Hooke"],
+    ans: "Mendel",
+    topic: "Genetics"
+    },
+    {
+    q: "Traits are passed from parents to offspring through:",
+    options: ["Blood", "Genes", "Cells", "Organs"],
+    ans: "Genes",
+    topic: "Genetics"
+    },
+    {
+    q: "Genes are located on:",
+    options: ["Nucleus", "Chromosomes", "Ribosomes", "Cytoplasm"],
+    ans: "Chromosomes",
+    topic: "Genetics"
+    },
+    {
+    q: "An organism with two identical alleles is said to be:",
+    options: ["Heterozygous", "Hybrid", "Homozygous", "Dominant"],
+    ans: "Homozygous",
+    topic: "Genetics"
+    },
+    {
+    q: "Which trait shows itself in a heterozygous condition?",
+    options: ["Recessive", "Dominant", "Hidden", "Incomplete"],
+    ans: "Dominant",
+    topic: "Genetics"
+    },
+    {
+    q: "The outward appearance of an organism is its:",
+    options: ["Genotype", "Phenotype", "Allele", "Chromosome"],
+    ans: "Phenotype",
+    topic: "Genetics"
+    },
+    {
+    q: "The genetic makeup of an organism is called:",
+    options: ["Phenotype", "Allele", "Genotype", "Trait"],
+    ans: "Genotype",
+    topic: "Genetics"
+    },
+    {
+    q: "A cross involving one trait is called:",
+    options: ["Dihybrid cross", "Monohybrid cross", "Test cross", "Back cross"],
+    ans: "Monohybrid cross",
+    topic: "Genetics"
+    },
+    {
+    q: "The recessive trait appears only when:",
+    options: ["Dominant allele is present", "Two recessive alleles are present", "One allele is present", "Genes are absent"],
+    ans: "Two recessive alleles are present",
+    topic: "Genetics"
+    },
+    {
+    q: "Which blood group is a universal donor?",
+    options: ["A", "B", "AB", "O"],
+    ans: "O",
+    topic: "Genetics"
+    },
+    {
+    q: "Sex determination in humans is controlled by:",
+    options: ["Autosomes", "Sex chromosomes", "Genes only", "Cytoplasm"],
+    ans: "Sex chromosomes",
+    topic: "Genetics"
+    },
+    {
+    q: "Which chromosome combination produces a male?",
+    options: ["XX", "YY", "XY", "XO"],
+    ans: "XY",
+    topic: "Genetics"
+    },
+    {
+    q: "Albinism is an example of:",
+    options: ["Dominant trait", "Sex-linked trait", "Recessive trait", "Acquired trait"],
+    ans: "Recessive trait",
+    topic: "Genetics"
+    },
+    {
+    q: "Variation refers to:",
+    options: ["Similarity among organisms", "Differences among individuals", "Growth", "Reproduction"],
+    ans: "Differences among individuals",
+    topic: "Genetics"
+    },
+    
+    /* ============ ECOLOGY (15) ============ */
+    {
+    q: "Ecology is the study of:",
+    options: ["Cells", "Living organisms and their environment", "Genes", "Evolution"],
+    ans: "Living organisms and their environment",
+    topic: "Ecology"
+    },
+    {
+    q: "A group of organisms of the same species living together is called:",
+    options: ["Community", "Population", "Habitat", "Ecosystem"],
+    ans: "Population",
+    topic: "Ecology"
+    },
+    {
+    q: "The place where an organism lives is its:",
+    options: ["Niche", "Habitat", "Community", "Ecosystem"],
+    ans: "Habitat",
+    topic: "Ecology"
+    },
+    {
+    q: "Plants are classified as:",
+    options: ["Consumers", "Decomposers", "Producers", "Parasites"],
+    ans: "Producers",
+    topic: "Ecology"
+    },
+    {
+    q: "Animals that eat plants are called:",
+    options: ["Carnivores", "Omnivores", "Herbivores", "Decomposers"],
+    ans: "Herbivores",
+    topic: "Ecology"
+    },
+    {
+    q: "An organism that feeds on both plants and animals is:",
+    options: ["Herbivore", "Carnivore", "Omnivore", "Parasite"],
+    ans: "Omnivore",
+    topic: "Ecology"
+    },
+    {
+    q: "The relationship where both organisms benefit is:",
+    options: ["Parasitism", "Commensalism", "Mutualism", "Competition"],
+    ans: "Mutualism",
+    topic: "Ecology"
+    },
+    {
+    q: "Which organism breaks down dead organic matter?",
+    options: ["Producer", "Consumer", "Decomposer", "Parasite"],
+    ans: "Decomposer",
+    topic: "Ecology"
+    },
+    {
+    q: "Energy in an ecosystem flows from:",
+    options: ["Consumers to producers", "Producers to consumers", "Animals to plants", "Decomposers to producers"],
+    ans: "Producers to consumers",
+    topic: "Ecology"
+    },
+    {
+    q: "A food chain always begins with:",
+    options: ["Herbivores", "Carnivores", "Producers", "Decomposers"],
+    ans: "Producers",
+    topic: "Ecology"
+    },
+    {
+    q: "Competition occurs when organisms:",
+    options: ["Cooperate", "Share resources freely", "Fight for limited resources", "Live separately"],
+    ans: "Fight for limited resources",
+    topic: "Ecology"
+    },
+    {
+    q: "Deforestation affects the ecosystem by:",
+    options: ["Increasing biodiversity", "Reducing habitat", "Improving soil fertility", "Increasing rainfall"],
+    ans: "Reducing habitat",
+    topic: "Ecology"
+    },
+    {
+    q: "Biotic factors include:",
+    options: ["Water", "Temperature", "Plants and animals", "Soil"],
+    ans: "Plants and animals",
+    topic: "Ecology"
+    },
+    {
+    q: "Abiotic factors include:",
+    options: ["Plants", "Animals", "Microorganisms", "Temperature"],
+    ans: "Temperature",
+    topic: "Ecology"
+    },
+    {
+    q: "Pollution is best defined as:",
+    options: ["Use of land", "Introduction of harmful substances", "Natural disaster", "Recycling"],
+    ans: "Introduction of harmful substances",
+    topic: "Ecology"
+    },
+    
+    /* ============ PLANT & ANIMAL PHYSIOLOGY (15) ============ */
+    {
+    q: "Physiology is the study of:",
+    options: ["Structure", "Functions of living organisms", "Cells only", "Environment"],
+    ans: "Functions of living organisms",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Photosynthesis occurs mainly in the:",
+    options: ["Root", "Stem", "Leaf", "Flower"],
+    ans: "Leaf",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "The green pigment used in photosynthesis is:",
+    options: ["Haemoglobin", "Chlorophyll", "Carotene", "Melanin"],
+    ans: "Chlorophyll",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "The opening and closing of stomata controls:",
+    options: ["Respiration only", "Transpiration", "Growth", "Reproduction"],
+    ans: "Transpiration",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Water transport in plants occurs through:",
+    options: ["Phloem", "Xylem", "Cambium", "Cortex"],
+    ans: "Xylem",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Food transport in plants occurs through:",
+    options: ["Xylem", "Phloem", "Root hair", "Stem"],
+    ans: "Phloem",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Respiration is the process of:",
+    options: ["Energy release", "Food manufacture", "Gas exchange", "Growth"],
+    ans: "Energy release",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "The main organ of respiration in humans is the:",
+    options: ["Heart", "Lungs", "Kidney", "Liver"],
+    ans: "Lungs",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Blood transports:",
+    options: ["Only oxygen", "Nutrients and gases", "Waste only", "Water only"],
+    ans: "Nutrients and gases",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "The organ that pumps blood is the:",
+    options: ["Liver", "Brain", "Heart", "Kidney"],
+    ans: "Heart",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Digestion of food begins in the:",
+    options: ["Stomach", "Mouth", "Small intestine", "Oesophagus"],
+    ans: "Mouth",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "The enzyme in saliva is:",
+    options: ["Pepsin", "Amylase", "Lipase", "Trypsin"],
+    ans: "Amylase",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Excretion is the removal of:",
+    options: ["Undigested food", "Metabolic waste", "Water only", "Oxygen"],
+    ans: "Metabolic waste",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "The kidney is responsible for:",
+    options: ["Breathing", "Digestion", "Excretion", "Circulation"],
+    ans: "Excretion",
+    topic: "Plant and Animal Physiology"
+    },
+    {
+    q: "Hormones are produced by:",
+    options: ["Nerves", "Glands", "Muscles", "Bones"],
+    ans: "Glands",
+    topic: "Plant and Animal Physiology"
+    }
+    
+    ],
+"GST": [
+      /* ============ LANGUAGE (15) ============ */
+    {
+    q: "Language is best defined as:",
+    options: ["A system of sounds", "A means of communication", "A collection of words", "A subject"],
+    ans: "A means of communication",
+    topic: "Language"
+    },
+    {
+    q: "Language is primarily used for:",
+    options: ["Punishment", "Communication", "Confusion", "Entertainment only"],
+    ans: "Communication",
+    topic: "Language"
+    },
+    {
+    q: "Which of the following is a function of language?",
+    options: ["Sleeping", "Communication", "Walking", "Eating"],
+    ans: "Communication",
+    topic: "Language"
+    },
+    {
+    q: "Human language is different from animal communication because it is:",
+    options: ["Instinctive", "Limited", "Creative", "Fixed"],
+    ans: "Creative",
+    topic: "Language"
+    },
+    {
+    q: "The study of language is called:",
+    options: ["Literature", "Grammar", "Linguistics", "Syntax"],
+    ans: "Linguistics",
+    topic: "Language"
+    },
+    {
+    q: "Which of the following is NOT a feature of language?",
+    options: ["Arbitrariness", "Creativity", "Productivity", "Instinct"],
+    ans: "Instinct",
+    topic: "Language"
+    },
+    {
+    q: "Language changes over time due to:",
+    options: ["Culture and society", "Weather", "Age", "Sleep"],
+    ans: "Culture and society",
+    topic: "Language"
+    },
+    {
+    q: "A language used by a community is called:",
+    options: ["Idiolect", "Dialect", "Sociolect", "Register"],
+    ans: "Dialect",
+    topic: "Language"
+    },
+    {
+    q: "The smallest meaningful unit of language is:",
+    options: ["Sound", "Word", "Morpheme", "Sentence"],
+    ans: "Morpheme",
+    topic: "Language"
+    },
+    {
+    q: "Language is said to be arbitrary because:",
+    options: ["It has no rules", "Words have no natural connection to meaning", "It is difficult", "It is universal"],
+    ans: "Words have no natural connection to meaning",
+    topic: "Language"
+    },
+    {
+    q: "Which of these is a spoken language?",
+    options: ["Sign language", "English", "Symbols", "Codes"],
+    ans: "English",
+    topic: "Language"
+    },
+    {
+    q: "Written language is mainly used for:",
+    options: ["Immediate feedback", "Permanent records", "Gestures", "Sound"],
+    ans: "Permanent records",
+    topic: "Language"
+    },
+    {
+    q: "The language used in academic writing should be:",
+    options: ["Slang", "Informal", "Formal", "Colloquial"],
+    ans: "Formal",
+    topic: "Language"
+    },
+    {
+    q: "Language reflects a people’s:",
+    options: ["Weather", "Culture", "Food", "Housing"],
+    ans: "Culture",
+    topic: "Language"
+    },
+    {
+    q: "Which of the following is NOT a form of language?",
+    options: ["Speech", "Writing", "Gesture", "Noise"],
+    ans: "Noise",
+    topic: "Language"
+    },
+    
+    /* ============ LISTENING AND SPEAKING SKILLS (15) ============ */
+    {
+    q: "Listening is different from hearing because listening involves:",
+    options: ["Sound", "Attention", "Noise", "Ears only"],
+    ans: "Attention",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Effective listening requires:",
+    options: ["Talking", "Concentration", "Interrupting", "Arguing"],
+    ans: "Concentration",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Which of the following is a barrier to listening?",
+    options: ["Attention", "Noise", "Understanding", "Interest"],
+    ans: "Noise",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Good speaking skills require:",
+    options: ["Confidence", "Fear", "Speed", "Silence"],
+    ans: "Confidence",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Pronunciation refers to:",
+    options: ["Spelling of words", "Meaning of words", "Correct production of sounds", "Grammar"],
+    ans: "Correct production of sounds",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Clear speech depends largely on:",
+    options: ["Volume", "Speed", "Articulation", "Accent"],
+    ans: "Articulation",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Which of the following improves listening skills?",
+    options: ["Interrupting speaker", "Maintaining eye contact", "Daydreaming", "Arguing"],
+    ans: "Maintaining eye contact",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Speaking too fast can cause:",
+    options: ["Clarity", "Understanding", "Miscommunication", "Confidence"],
+    ans: "Miscommunication",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Public speaking involves:",
+    options: ["Private discussion", "Audience interaction", "Silence", "Writing only"],
+    ans: "Audience interaction",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Tone of voice can show:",
+    options: ["Emotion", "Grammar", "Spelling", "Vocabulary"],
+    ans: "Emotion",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Listening for main ideas is called:",
+    options: ["Critical listening", "Attentive listening", "Selective listening", "Passive listening"],
+    ans: "Selective listening",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Which is an example of non-verbal communication?",
+    options: ["Writing", "Speaking", "Gestures", "Reading"],
+    ans: "Gestures",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Eye contact during speech shows:",
+    options: ["Fear", "Confidence", "Anger", "Confusion"],
+    ans: "Confidence",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Effective speaking requires proper:",
+    options: ["Posture", "Noise", "Argument", "Silence"],
+    ans: "Posture",
+    topic: "Listening and speaking skills"
+    },
+    {
+    q: "Listening is important because it helps to:",
+    options: ["Argue", "Understand message", "Interrupt", "Ignore speaker"],
+    ans: "Understand message",
+    topic: "Listening and speaking skills"
+    },
+    
+    /* ============ SPEECH SOUNDS (15) ============ */
+    {
+    q: "Speech sounds are studied in:",
+    options: ["Syntax", "Phonetics", "Semantics", "Morphology"],
+    ans: "Phonetics",
+    topic: "Speech sounds"
+    },
+    {
+    q: "English has how many vowel sounds?",
+    options: ["12", "20", "24", "44"],
+    ans: "20",
+    topic: "Speech sounds"
+    },
+    {
+    q: "English consonant sounds are:",
+    options: ["20", "24", "44", "12"],
+    ans: "24",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Vowel sounds are produced with:",
+    options: ["Obstruction", "No obstruction", "Nasal cavity only", "Tongue only"],
+    ans: "No obstruction",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Consonant sounds are produced with:",
+    options: ["No obstruction", "Partial or total obstruction", "Free airflow", "Vibration only"],
+    ans: "Partial or total obstruction",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Which is a vowel sound?",
+    options: ["/b/", "/t/", "/iː/", "/k/"],
+    ans: "/iː/",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Which is a consonant sound?",
+    options: ["/a/", "/e/", "/p/", "/ɔː/"],
+    ans: "/p/",
+    topic: "Speech sounds"
+    },
+    {
+    q: "The International Phonetic Alphabet (IPA) is used for:",
+    options: ["Spelling", "Pronunciation", "Grammar", "Writing"],
+    ans: "Pronunciation",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Diphthongs are:",
+    options: ["Single vowel sounds", "Double consonants", "Combination of two vowel sounds", "Silent letters"],
+    ans: "Combination of two vowel sounds",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Which is a diphthong?",
+    options: ["/iː/", "/æ/", "/eɪ/", "/ʊ/"],
+    ans: "/eɪ/",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Voiced sounds involve:",
+    options: ["No vibration", "Tongue only", "Vocal cord vibration", "Teeth only"],
+    ans: "Vocal cord vibration",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Voiceless sounds involve:",
+    options: ["Vocal cord vibration", "No vibration", "Lips only", "Tongue only"],
+    ans: "No vibration",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Which of these is a voiceless sound?",
+    options: ["/b/", "/d/", "/z/", "/s/"],
+    ans: "/s/",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Speech sounds help in:",
+    options: ["Spelling only", "Clear communication", "Writing", "Grammar"],
+    ans: "Clear communication",
+    topic: "Speech sounds"
+    },
+    {
+    q: "Phonetics focuses on:",
+    options: ["Meaning", "Sentence structure", "Sound production", "Word formation"],
+    ans: "Sound production",
+    topic: "Speech sounds"
+    }
+    
+  
+    // ... (Add 10 questions per GST topic) ...
+],
+"GES151": [
+    /* ============ AGRICULTURAL SYSTEMS (20) ============ */
+    {
+    q: "Agriculture can best be defined as:",
+    options: ["The study of plants only", "The cultivation of crops and rearing of animals", "Trading of farm produce", "Soil management only"],
+    ans: "The cultivation of crops and rearing of animals",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Which of the following is an agricultural system?",
+    options: ["Subsistence farming", "Mining", "Fishing only", "Manufacturing"],
+    ans: "Subsistence farming",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Subsistence farming is characterized by:",
+    options: ["Large-scale production", "Production mainly for family use", "Export-oriented farming", "Use of heavy machinery"],
+    ans: "Production mainly for family use",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Commercial agriculture mainly aims at:",
+    options: ["Family feeding", "Export and profit", "Cultural practice", "Soil conservation"],
+    ans: "Export and profit",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Mixed farming involves:",
+    options: ["Only crops", "Only livestock", "Crop and livestock production", "Fishing and hunting"],
+    ans: "Crop and livestock production",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Which farming system involves moving from place to place?",
+    options: ["Mixed farming", "Shifting cultivation", "Commercial farming", "Plantation farming"],
+    ans: "Shifting cultivation",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Mechanized farming is characterized by:",
+    options: ["Manual labor only", "Use of machines", "Primitive tools", "Low capital"],
+    ans: "Use of machines",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Crop rotation helps to:",
+    options: ["Reduce soil fertility", "Increase pest attack", "Maintain soil fertility", "Destroy crops"],
+    ans: "Maintain soil fertility",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Monocropping refers to:",
+    options: ["Growing many crops", "Growing one crop repeatedly", "Mixed cropping", "Crop rotation"],
+    ans: "Growing one crop repeatedly",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Intercropping means:",
+    options: ["Growing crops separately", "Growing two or more crops together", "Planting one crop yearly", "Harvesting early"],
+    ans: "Growing two or more crops together",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Bush fallowing helps soil by:",
+    options: ["Increasing erosion", "Allowing soil to regain nutrients", "Reducing organic matter", "Destroying microbes"],
+    ans: "Allowing soil to regain nutrients",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Which farming system is common in rural Nigeria?",
+    options: ["Subsistence farming", "Plantation farming", "Mechanized farming", "Hydroponics"],
+    ans: "Subsistence farming",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Large-scale farming usually requires:",
+    options: ["Low capital", "High capital", "No labor", "Primitive tools"],
+    ans: "High capital",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Organic farming avoids the use of:",
+    options: ["Manure", "Compost", "Synthetic chemicals", "Crop rotation"],
+    ans: "Synthetic chemicals",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Plantation farming mainly involves:",
+    options: ["Food crops", "Tree crops", "Livestock", "Fishing"],
+    ans: "Tree crops",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Which crop is commonly grown on plantations?",
+    options: ["Maize", "Cocoa", "Rice", "Beans"],
+    ans: "Cocoa",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "The main advantage of mechanized farming is:",
+    options: ["Low yield", "High labor cost", "Increased productivity", "Soil degradation"],
+    ans: "Increased productivity",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Which system uses scientific methods in farming?",
+    options: ["Traditional farming", "Subsistence farming", "Modern farming", "Bush fallowing"],
+    ans: "Modern farming",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "The major problem of subsistence farming is:",
+    options: ["High yield", "Low productivity", "Over mechanization", "High profit"],
+    ans: "Low productivity",
+    topic: "Agricultural Systems"
+    },
+    {
+    q: "Agricultural extension services help farmers by:",
+    options: ["Tax collection", "Providing farming information", "Land seizure", "Selling crops"],
+    ans: "Providing farming information",
+    topic: "Agricultural Systems"
+    },
+    
+    /* ============ CROP PRODUCTION & PRACTICES (20) ============ */
+    {
+    q: "Crop production involves:",
+    options: ["Only harvesting", "Growing crops for food and raw materials", "Animal rearing", "Fishing"],
+    ans: "Growing crops for food and raw materials",
+    topic: "Crop Production"
+    },
+    {
+    q: "Which of the following is a cereal crop?",
+    options: ["Beans", "Maize", "Groundnut", "Cassava"],
+    ans: "Maize",
+    topic: "Crop Production"
+    },
+    {
+    q: "Leguminous crops help the soil by:",
+    options: ["Removing nitrogen", "Fixing nitrogen", "Increasing erosion", "Reducing fertility"],
+    ans: "Fixing nitrogen",
+    topic: "Crop Production"
+    },
+    {
+    q: "Land preparation before planting includes:",
+    options: ["Harvesting", "Ploughing", "Storage", "Marketing"],
+    ans: "Ploughing",
+    topic: "Crop Production"
+    },
+    {
+    q: "Which tool is used for weeding?",
+    options: ["Cutlass", "Hoe", "Tractor", "Sprayer"],
+    ans: "Hoe",
+    topic: "Crop Production"
+    },
+    {
+    q: "Seed selection is important because it affects:",
+    options: ["Market price", "Yield and quality", "Weather", "Soil color"],
+    ans: "Yield and quality",
+    topic: "Crop Production"
+    },
+    {
+    q: "Which farming practice controls weeds?",
+    options: ["Mulching", "Harvesting", "Storage", "Marketing"],
+    ans: "Mulching",
+    topic: "Crop Production"
+    },
+    {
+    q: "Fertilizers are applied to soil to:",
+    options: ["Kill crops", "Improve soil nutrients", "Increase erosion", "Reduce yield"],
+    ans: "Improve soil nutrients",
+    topic: "Crop Production"
+    },
+    {
+    q: "Which is a tuber crop?",
+    options: ["Rice", "Yam", "Maize", "Millet"],
+    ans: "Yam",
+    topic: "Crop Production"
+    },
+    {
+    q: "Harvesting should be done when crops are:",
+    options: ["Immature", "Overripe", "Mature", "Seedlings"],
+    ans: "Mature",
+    topic: "Crop Production"
+    },
+    
+    /* ============ FARM MACHINERY & TOOLS (15) ============ */
+    {
+    q: "Farm machinery helps to:",
+    options: ["Increase labor", "Reduce efficiency", "Increase productivity", "Delay farming"],
+    ans: "Increase productivity",
+    topic: "Farm Machinery"
+    },
+    {
+    q: "Which is a simple farm tool?",
+    options: ["Tractor", "Plough", "Hoe", "Harvester"],
+    ans: "Hoe",
+    topic: "Farm Machinery"
+    },
+    {
+    q: "A tractor is mainly used for:",
+    options: ["Harvesting fruits", "Land preparation", "Storage", "Irrigation"],
+    ans: "Land preparation",
+    topic: "Farm Machinery"
+    },
+    {
+    q: "Which machine is used for harvesting grains?",
+    options: ["Sprayer", "Combine harvester", "Plough", "Seeder"],
+    ans: "Combine harvester",
+    topic: "Farm Machinery"
+    },
+    {
+    q: "Farm tools are usually operated by:",
+    options: ["Machines", "Animals", "Human labor", "Electricity"],
+    ans: "Human labor",
+    topic: "Farm Machinery"
+    },
+    
+    /* ============ SOIL SCIENCE (15) ============ */
+    {
+    q: "Soil is important for plants because it provides:",
+    options: ["Only water", "Nutrients and support", "Air only", "Heat"],
+    ans: "Nutrients and support",
+    topic: "Soil Science"
+    },
+    {
+    q: "The three major types of soil are:",
+    options: ["Clay, loam, sand", "Black, red, white", "Wet, dry, moist", "Hard, soft, loose"],
+    ans: "Clay, loam, sand",
+    topic: "Soil Science"
+    },
+    {
+    q: "Loamy soil is best for farming because it:",
+    options: ["Retains too much water", "Is very sandy", "Has balanced nutrients", "Is rocky"],
+    ans: "Has balanced nutrients",
+    topic: "Soil Science"
+    },
+    {
+    q: "Soil erosion can be prevented by:",
+    options: ["Deforestation", "Mulching", "Overgrazing", "Bush burning"],
+    ans: "Mulching",
+    topic: "Soil Science"
+    },
+    {
+    q: "Which organism improves soil fertility?",
+    options: ["Termites", "Earthworms", "Ants", "Snakes"],
+    ans: "Earthworms",
+    topic: "Soil Science"
+    },
+    
+    /* ============ ANIMAL HUSBANDRY (15) ============ */
+    {
+    q: "Animal husbandry involves:",
+    options: ["Crop cultivation", "Rearing of animals", "Fishing", "Forestry"],
+    ans: "Rearing of animals",
+    topic: "Animal Husbandry"
+    },
+    {
+    q: "Which is a farm animal?",
+    options: ["Lion", "Goat", "Snake", "Tiger"],
+    ans: "Goat",
+    topic: "Animal Husbandry"
+    },
+    {
+    q: "Which animal is reared mainly for milk?",
+    options: ["Sheep", "Cow", "Goat", "Pig"],
+    ans: "Cow",
+    topic: "Animal Husbandry"
+    },
+    {
+    q: "Balanced diet in animals helps in:",
+    options: ["Poor growth", "Good health and growth", "Disease spread", "Low productivity"],
+    ans: "Good health and growth",
+    topic: "Animal Husbandry"
+    },
+    {
+    q: "Poultry farming involves rearing of:",
+    options: ["Cattle", "Sheep", "Birds", "Fish"],
+    ans: "Birds",
+    topic: "Animal Husbandry"
+    }
+    
+    
+
+    // ... (Add 10 questions per AGR101 topic) ...
+]
+};
+
+
+    /* --- II. GLOBAL VARIABLES --- */
+    let quizData = []; 
+    let userAnswers = [];
+    let currentQuestionIndex = 0;
+    let currentMode;
+    let selectedSubject;
+    let totalQuestionsCount;
+
+    let timerInterval; 
+    let startTime; 
+    let totalTime; 
+    let timeLeft;
+
+    /* --- III. HELPER FUNCTIONS --- */
+    function getQueryParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+    
+    // Fisher-Yates Shuffle Algorithm to randomize questions
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    /* --- IV. DATA LOADING AND INITIALIZATION --- */
+    function loadData() {
+        const requestedTopic = getQueryParameter('topics'); 
+        const requestedCount = parseInt(getQueryParameter('count'));
+
+        let allSubjectQuestions = CBT_DATA[selectedSubject] || [];
+        let filteredQuestions = [];
+
+        if (currentMode === 'practice') {
+            // In practice mode, filter by specific topic
+            filteredQuestions = allSubjectQuestions.filter(q => q.topic === requestedTopic);
+        } else if (currentMode === 'exam') {
+            // In exam mode, use ALL questions from the subject
+            filteredQuestions = [...allSubjectQuestions]; 
+        }
+        
+        // Randomize the questions
+        shuffleArray(filteredQuestions);
+        
+        // Select the requested number of questions
+        quizData = filteredQuestions.slice(0, requestedCount);
+        
+        totalQuestionsCount = quizData.length;
+        userAnswers = Array(totalQuestionsCount).fill(null);
+
+        if (totalQuestionsCount === 0) {
+            alert(`Error: No questions found for ${selectedSubject}. Returning home.`);
+            window.location.href = 'home.html';
+        }
+    }
+
+    function initializeTest() {
+        selectedSubject = getQueryParameter('subject');
+        currentMode = getQueryParameter('mode');
+
+        if (!selectedSubject || !currentMode) {
+            alert("Configuration Error. Please select subject and mode first.");
+            window.location.href = 'home.html';
+            return;
+        }
+        
+        document.getElementById('subjectTitle').textContent = selectedSubject;
+        
+        loadData();
+        
+        // Timer Setup
+        let requestedTime = parseInt(getQueryParameter('time'));
+
+        // Start timer ONLY if a valid time is requested (e.g., > 0 minutes)
+        if (!isNaN(requestedTime) && requestedTime > 0) {
+            totalTime = requestedTime * 60; // Convert minutes to seconds
+            timeLeft = totalTime;
+            startTime = Date.now();
+
+            // SHOW TIMER BOXES
+            document.getElementById('timerBox').style.display = 'block';
+            document.getElementById('mobileTimerBox').style.display = 'flex';
+
+            updateTimerDisplay(); // Initial display
+            startTimer();
+        } else {
+            // HIDE TIMER BOXES if time is 0 or invalid
+            document.getElementById('timerBox').style.display = 'none';
+            document.getElementById('mobileTimerBox').style.display = 'none';
+            startTime = Date.now();
+        }
+
+        // Event Listeners
+        document.getElementById('prevBtn').addEventListener('click', () => navigateQuestion(-1));
+        document.getElementById('nextBtn').addEventListener('click', () => navigateQuestion(1));
+        
+        renderQuestion();
+        renderQuestionNavigator();
+        updateProgressBar();
+    }
+
+    /* --- V. TEST FLOW AND RENDERING --- */
+    function renderQuestion() {
+        if (quizData.length === 0) return;
+
+        const qData = quizData[currentQuestionIndex];
+
+        // Update Question Info
+        document.getElementById('questionNumber').innerHTML = `Question ${currentQuestionIndex + 1} of ${totalQuestionsCount}`;
+        document.getElementById('questionTopic').textContent = `Topic: ${qData.topic}`;
+        document.getElementById('questionText').innerHTML = qData.q; 
+
+        // Update Options
+        const optionsList = document.getElementById('optionsList');
+        optionsList.innerHTML = '';
+        const currentAnswer = userAnswers[currentQuestionIndex];
+
+        qData.options.forEach((option, index) => {
+            const optionLetter = String.fromCharCode(65 + index);
+            const listItem = document.createElement('li');
+            listItem.className = 'option-item';
+            
+            const radioId = `q${currentQuestionIndex}-opt${index}`;
+            const isChecked = option === currentAnswer;
+
+            listItem.innerHTML = `
+                <input type="radio" id="${radioId}" name="question-option" value="${option}" ${isChecked ? 'checked' : ''} />
+                <label for="${radioId}" class="option-label">
+                    (${optionLetter}) ${option}
+                </label>
+            `;
+            optionsList.appendChild(listItem);
+        });
+
+        // Add event listeners to the new radio buttons
+        optionsList.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', recordAnswer);
+        });
+
+        // Update Navigation Buttons
+        document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+        document.getElementById('nextBtn').disabled = currentQuestionIndex === totalQuestionsCount - 1;
+
+        renderQuestionNavigator();
+    }
+    
+    function navigateQuestion(direction) {
+        if (currentQuestionIndex + direction >= 0 && currentQuestionIndex + direction < totalQuestionsCount) {
+            currentQuestionIndex += direction;
+            renderQuestion();
+        }
+    }
+function toggleCalculator() {
+    const calc = document.getElementById('calculator');
+    calc.style.display = calc.style.display === 'block' ? 'none' : 'block';
+}
+
+function calcInput(value) {
+    document.getElementById('calcDisplay').value += value;
+}
+function squareRoot() {
+    const display = document.getElementById('calcDisplay');
+    if (display.value !== "") {
+        display.value = Math.sqrt(display.value);
+    }
+}
+function calculate() {
+    try {
+        document.getElementById('calcDisplay').value =
+            eval(document.getElementById('calcDisplay').value);
+    } catch {
+        document.getElementById('calcDisplay').value = "Error";
+    }
+}
+let isDragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+function startDrag(e) {
+    isDragging = true;
+
+    const calc = document.getElementById("calculator");
+    const event = e.touches ? e.touches[0] : e;
+
+    offsetX = event.clientX - calc.offsetLeft;
+    offsetY = event.clientY - calc.offsetTop;
+
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", stopDrag);
+    document.addEventListener("touchmove", drag);
+    document.addEventListener("touchend", stopDrag);
+}
+
+function drag(e) {
+    if (!isDragging) return;
+
+    const calc = document.getElementById("calculator");
+    const event = e.touches ? e.touches[0] : e;
+
+    calc.style.left = (event.clientX - offsetX) + "px";
+    calc.style.top = (event.clientY - offsetY) + "px";
+    calc.style.bottom = "auto";
+    calc.style.right = "auto";
+}
+
+function stopDrag() {
+    isDragging = false;
+
+    document.removeEventListener("mousemove", drag);
+    document.removeEventListener("mouseup", stopDrag);
+    document.removeEventListener("touchmove", drag);
+    document.removeEventListener("touchend", stopDrag);
+}
+function clearCalc() {
+    document.getElementById('calcDisplay').value = "";
+}
+    function recordAnswer(event) {
+        const selectedOption = event.target.value;
+        userAnswers[currentQuestionIndex] = selectedOption;
+        updateProgressBar();
+        renderQuestionNavigator(); 
+    }
+
+    function renderQuestionNavigator() {
+        const navContainer = document.getElementById('navContainer');
+        navContainer.innerHTML = ''; 
+
+        quizData.forEach((q, index) => {
+            const button = document.createElement('button');
+            button.textContent = index + 1;
+            button.className = 'nav-button';
+            
+            const answer = userAnswers[index];
+            if (answer !== null) {
+                button.classList.add('answered');
+            } 
+            if (index === currentQuestionIndex) {
+                button.classList.add('current');
+            }
+
+            button.onclick = () => {
+                currentQuestionIndex = index;
+                renderQuestion();
+            };
+            navContainer.appendChild(button);
+        });
+    }
+
+    /* --- VI. TIMER AND PROGRESS --- */
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                updateTimerDisplay();
+                alert("Time is up! The test will now be submitted.");
+                submitTest();
+                return;
+            }
+
+            timeLeft--;
+            updateTimerDisplay();
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        // FIXED: Timer display now updates regardless of mode, as long as timer logic is active
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        
+        // Update both the desktop sidebar timer and the mobile header timer
+        document.getElementById('timerDisplay').textContent = displayTime;
+        document.getElementById('timerDisplayMobile').textContent = displayTime;
+
+        // Apply warning styles to both containers/text fields if time is low
+        const timerBox = document.getElementById('timerBox');
+        const mobileTimerBox = document.getElementById('mobileTimerBox');
+        const isWarning = (timeLeft <= 300 && timeLeft > 0); // 5 minutes warning
+        
+        timerBox.classList.toggle('warning', isWarning);
+        mobileTimerBox.classList.toggle('warning', isWarning);
+        document.getElementById('timerDisplay').classList.toggle('warning-text', isWarning);
+        document.getElementById('timerDisplayMobile').classList.toggle('warning-text', isWarning);
+    }
+
+    function updateProgressBar() {
+        const answeredCount = userAnswers.filter(ans => ans !== null).length;
+        
+        document.getElementById('progressCount').textContent = `${answeredCount} / ${totalQuestionsCount}`;
+
+        const percentage = (answeredCount / totalQuestionsCount) * 100;
+        const progressBar = document.getElementById('progressBarInner');
+        
+        progressBar.style.width = `${percentage}%`;
+        
+        progressBar.classList.toggle('high-progress', percentage > 75);
+    }
+
+    /* --- VII. SUBMISSION LOGIC --- */
+    function confirmSubmission() {
+        const unanswered = userAnswers.filter(ans => ans === null).length;
+        let confirmationMessage = "Are you sure you want to finish the test?";
+        
+        if (unanswered > 0) {
+            confirmationMessage = `You have ${unanswered} unanswered questions. Submit anyway?`;
+        }
+
+        if (confirm(confirmationMessage)) {
+            submitTest();
+        }
+    }
+
+// REPLACE your current submitTest() with this:
+
+/* --- VII. SUBMISSION LOGIC --- */
+
+// NEW FUNCTION: Saves test summary data to the historical log
+function saveToHistory(newResult) {
+    // 1. Retrieve the existing history array, or initialize an empty array if none exists
+    let history = JSON.parse(localStorage.getItem('cbtHistory')) || [];
+    
+    // 2. Add the new result (summary data for stats.html)
+    history.push(newResult);
+    
+    // 3. Save the updated history array back to Local Storage
+    localStorage.setItem('cbtHistory', JSON.stringify(history));
+}
+
+function confirmSubmission() {
+    const unanswered = userAnswers.filter(ans => ans === null).length;
+    let confirmationMessage = "Are you sure you want to finish the test?";
+    
+    if (unanswered > 0) {
+        confirmationMessage = `You have ${unanswered} unanswered questions. Submit anyway?`;
+    }
+
+    if (confirm(confirmationMessage)) {
+        submitTest();
+    }
+}
+
+function submitTest() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    let score = 0;
+    
+    // Calculate final score
+    quizData.forEach((qData, index) => {
+        if (userAnswers[index] === qData.ans) {
+            score++;
+        }
+    });
+    
+    const answeredCount = userAnswers.filter(ans => ans !== null).length;
+    const unanswered = totalQuestionsCount - answeredCount;
+    // Calculate incorrect based on answered questions minus correct score
+    const incorrect = answeredCount - score; 
+    
+    const percentage = Math.round((score / totalQuestionsCount) * 100);
+
+    // Calculate total duration
+    const duration = Math.floor((Date.now() - startTime) / 1000); // Duration in seconds
+
+    // --- 1. Historical Result Object (Summary Only for Stats Page) ---
+    const historyResult = {
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        timestamp: Date.now(),
+        subject: selectedSubject,
+        mode: currentMode,
+        score: score,
+        totalQuestions: totalQuestionsCount,
+        incorrect: incorrect,
+        unanswered: unanswered,
+        percentage: percentage,
+        duration: duration,
+        // Crucially, this is the light object saved to history
+    };
+    
+    // --- 2. Save Results for Immediate Display (Detailed for results.html) ---
+    const detailedResults = {
+        ...historyResult, // Include all summary data
+        questions: quizData, // Add question details for review
+        userAnswers: userAnswers // Add user answers for review
+    };
+
+    localStorage.setItem('cbtResults', JSON.stringify(detailedResults));
+    
+// --- 3. Save Results to Historical Log (This is the fix) ---
+    saveToHistory(historyResult);
+    // --- 4. INCREMENT TRIAL COUNTER (IF NOT UNLOCKED) ---
+    const isUnlocked = localStorage.getItem(`unlocked_${selectedSubject}`) === 'true';
+    if (!isUnlocked) {
+        const trialKey = `trials_${selectedSubject}`;
+        const currentTrials = parseInt(localStorage.getItem(trialKey) || '0');
+        const newTrials = currentTrials + 1;
+        localStorage.setItem(trialKey, newTrials.toString());
+        console.log(`[Trial Tracked] ${selectedSubject}: ${newTrials}/3 trials used`);
+    }
+    // Navigate to results page
+    window.location.href = 'results.html';
+}
+
+
+document.addEventListener('DOMContentLoaded', initializeTest);
+</script>
+</body>
+</html>

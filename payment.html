@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unlock Subject - Codex Study Hub</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .payment-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 600px;
+            padding: 40px;
+        }
+        .lock-icon {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: var(--danger);
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .subject-selector {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary);
+        }
+        .subject-selector h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .payment-btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .payment-btn:hover {
+            border-color: var(--primary);
+            background: #f0f7ff;
+            transform: translateY(-2px);
+        }
+        .payment-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .whatsapp-btn {
+            background: #25d366;
+            color: white;
+            border-color: #25d366;
+        }
+        .bank-btn {
+            background: #ffc107;
+            color: #333;
+            border-color: #ffc107;
+        }
+        .price {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .verification-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 5px solid var(--success);
+        }
+        .verification-section h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            margin: 10px 0;
+            text-transform: uppercase;
+        }
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .verify-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .verify-btn:hover {
+            background: #0056b3;
+        }
+        .verify-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-msg {
+            display: none;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        .success-msg {
+            display: none;
+            background: #d4edda;
+            color: var(--success);
+            border: 1px solid #c3e6cb;
+        }
+        .error-msg {
+            display: none;
+            background: #f8d7da;
+            color: var(--danger);
+            border: 1px solid #f5c6cb;
+        }
+        .warning-msg {
+            display: none;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .back-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+<div class="payment-container">
+    <div class="lock-icon">🔒</div>
+    <h1>Unlock Premium Access</h1>
+
+    <!-- STEP 1: SELECT SUBJECT -->
+    <div class="subject-selector">
+        <h3>Step 1: Select Subject to Unlock</h3>
+        <p style="margin-top: 0; color: #666; font-size: 0.95rem;">Choose the subject you want to unlock:</p>
+        <select id="subjectSelect" onchange="onSubjectChange()">
+            <option value="">-- Select a Subject --</option>
+            <option value="MTH101">🔢 MTH101 - Mathematics</option>
+            <option value="PHY101">⚙️ PHY101 - Physics</option>
+            <option value="CHM101">🧪 CHM101 - Chemistry</option>
+            <option value="COS101">💻 COS101 - Computer Science</option>
+            <option value="STA111">📊 STA111 - Statistics</option>
+            <option value="STA121">📊 STA121 - Statistics 2</option>
+            <option value="BIO101">🧬 BIO101 - Biology</option>
+            <option value="GST">🇬🇧 GST - General Studies (English)</option>
+            <option value="GES151">🌱 GES151 - Agriculture</option>
+        </select>
+    </div>
+
+    <p id="priceDisplay" style="text-align: center; color: #666; display: none;">
+        Only <strong>₦500</strong> to unlock <strong id="selectedSubjectDisplay"></strong> permanently
+    </p>
+
+    <!-- STEP 2: PAYMENT OPTIONS -->
+    <div class="payment-options">
+        <button class="payment-btn whatsapp-btn" id="whatsappBtn" onclick="openWhatsApp()" disabled>
+            💬 Pay via WhatsApp<br>
+            <span class="price">Send ₦500 & get verification key</span>
+        </button>
+        
+        <button class="payment-btn bank-btn" id="bankBtn" onclick="showBankDetails()" disabled>
+            🏦 Bank Transfer<br>
+            <span class="price">Send ₦500 to account below</span>
+        </button>
+    </div>
+
+    <!-- STEP 3: VERIFY KEY -->
+    <div class="verification-section">
+        <h3>Step 2: Have a Verification Key?</h3>
+        <p>Enter the key you received after payment:</p>
+        <input type="text" id="keyInput" placeholder="Enter verification key" maxlength="20">
+        <button class="verify-btn" id="verifyBtn" onclick="verifyKey()" disabled>Verify & Unlock</button>
+        <div class="success-msg" id="successMsg">✓ Subject unlocked successfully! Redirecting...</div>
+        <div class="error-msg" id="errorMsg">✗ Invalid key. Please check and try again.</div>
+        <div class="warning-msg" id="warningMsg">⚠️ Please select a subject first</div>
+    </div>
+
+    <button class="back-btn" onclick="goBack()">← Back</button>
+</div>
+
+<script>
+    const USERS_KEY = 'cbtUsers';
+    const USED_KEYS = 'usedVerificationKeys';
+    const WHATSAPP_NUMBER = '2347011245168';
+
+    document.addEventListener('DOMContentLoaded', initializePayment);
+    document.getElementById('keyInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') verifyKey();
+    });
+
+    function initializePayment() {
+        const selectedSubject = sessionStorage.getItem('selectedSubject');
+        if (selectedSubject) {
+            document.getElementById('subjectSelect').value = selectedSubject;
+            onSubjectChange();
+        }
+    }
+
+    function onSubjectChange() {
+        const subject = document.getElementById('subjectSelect').value;
+        const priceDisplay = document.getElementById('priceDisplay');
+        const whatsappBtn = document.getElementById('whatsappBtn');
+        const bankBtn = document.getElementById('bankBtn');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const warningMsg = document.getElementById('warningMsg');
+        const selectedSubjectDisplay = document.getElementById('selectedSubjectDisplay');
+
+        if (!subject) {
+            priceDisplay.style.display = 'none';
+            whatsappBtn.disabled = true;
+            bankBtn.disabled = true;
+            verifyBtn.disabled = true;
+            warningMsg.style.display = 'block';
+            return;
+        }
+
+        // Get subject name
+        const subjectSelect = document.getElementById('subjectSelect');
+        const subjectName = subjectSelect.options[subjectSelect.selectedIndex].text.split(' - ')[1];
+        
+        selectedSubjectDisplay.textContent = subject + ' (' + subjectName + ')';
+        priceDisplay.style.display = 'block';
+        whatsappBtn.disabled = false;
+        bankBtn.disabled = false;
+        verifyBtn.disabled = false;
+        warningMsg.style.display = 'none';
+
+        // Clear previous messages
+        document.getElementById('successMsg').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('keyInput').value = '';
+    }
+
+    function openWhatsApp() {
+        const subject = document.getElementById('subjectSelect').value;
+        if (!subject) {
+            alert('Please select a subject first');
+            return;
+        }
+        
+        const message = `Hi! I want to unlock ${subject} for ₦500. Please send me a verification key.`;
+        const encodedMsg = encodeURIComponent(message);
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMsg}`, '_blank');
+    }
+
+    function showBankDetails() {
+        const subject = document.getElementById('subjectSelect').value;
+        if (!subject) {
+            alert('Please select a subject first');
+            return;
+        }
+        
+        alert(`Bank Transfer Details:\n\nBank: [YOUR BANK]\nAccount Name: [YOUR NAME]\nAccount Number: [YOUR ACCOUNT]\n\nAfter transfer, send proof on WhatsApp to get your key for ${subject}.`);
+    }
+
+    function verifyKey() {
+        const subject = document.getElementById('subjectSelect').value;
+        const key = document.getElementById('keyInput').value.trim().toUpperCase();
+        const successMsg = document.getElementById('successMsg');
+        const errorMsg = document.getElementById('errorMsg');
+
+        if (!subject) {
+            document.getElementById('warningMsg').style.display = 'block';
+            return;
+        }
+
+        if (!key) {
+            errorMsg.textContent = '❌ Please enter a verification key';
+            errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
+            return;
+        }
+
+       const GENERATED_KEYS = 'generatedVerificationKeys';
+
+const generatedKeys =
+    JSON.parse(localStorage.getItem(GENERATED_KEYS)) || [];
+
+if (!generatedKeys.includes(key)) {
+    errorMsg.textContent = '❌ Invalid verification key';
+    errorMsg.style.display = 'block';
+    successMsg.style.display = 'none';
+    return;
+}
+
+        // CHECK IF KEY ALREADY USED FOR THIS SUBJECT
+        let usedKeys = JSON.parse(localStorage.getItem(USED_KEYS) || '{}');
+        if (usedKeys[subject] && usedKeys[subject].includes(key)) {
+            errorMsg.textContent = `❌ This key has already been used for ${subject}. Keys can only be used once per subject.`;
+            errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
+            return;
+        }
+
+        // UNLOCK SUBJECT
+        localStorage.setItem(`unlocked_${subject}`, 'true');
+        localStorage.setItem(`unlocked_time_${subject}`, new Date().toISOString());
+
+        // MARK KEY AS USED FOR THIS SUBJECT
+        if (!usedKeys[subject]) {
+            usedKeys[subject] = [];
+        }
+        usedKeys[subject].push(key);
+        localStorage.setItem(USED_KEYS, JSON.stringify(usedKeys));
+
+        // SUCCESS
+        successMsg.textContent = `✓ ${subject} unlocked successfully! Redirecting...`;
+        successMsg.style.display = 'block';
+        errorMsg.style.display = 'none';
+        document.getElementById('keyInput').value = '';
+
+        setTimeout(() => {
+            window.location.href = 'subject_selection.html?mode=practice';
+        }, 2000);
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+</script>
+
+</body>
+</html>
